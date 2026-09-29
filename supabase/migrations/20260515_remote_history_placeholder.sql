@@ -1,0 +1,3 @@
+-- No-op placeholder.
+-- This migration version already exists in the shared VenueMap Supabase project.
+-- It is kept here so the Tiregan white-label deployment can push its own later migrations.
