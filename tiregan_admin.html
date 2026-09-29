@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiregan 2026 — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f2ed;--bg2:#edeae4;--white:#fefcfa;--ink:#1a1916;--ink2:#4a4843;--ink3:#9a9690;
+  --border:#d8d4cc;--border2:#c8c4bc;
+  --amber:#d4620a;--amber-light:#f07030;--amber-bg:#fdf0e8;--amber-border:#f0c8a8;
+  --green:#1a6b3c;--green-bg:#e8f5ee;--red:#c0392b;--red-bg:#fde8e8;
+  --yellow:#b45309;--yellow-bg:#fef3e8;
+  --serif:'Instrument Serif',serif;--sans:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);}
+nav{height:52px;background:var(--ink);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:200;}
+.logo{font-size:15px;font-weight:800;color:white;text-decoration:none;display:flex;align-items:center;gap:7px;}
+.logo-mark{width:22px;height:22px;background:var(--amber);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:800;}
+.nav-badge{background:var(--red);color:white;font-size:9px;font-weight:800;padding:2px 7px;border-radius:100px;letter-spacing:1px;}
+.nav-right{margin-left:auto;display:flex;gap:10px;}
+.nav-btn{padding:6px 14px;border-radius:100px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;text-decoration:none;transition:all 0.15s;}
+.nav-btn:hover{border-color:rgba(255,255,255,0.3);color:white;}
+
+.main{max-width:1200px;margin:0 auto;padding:28px;display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;}
+
+/* MAP ADMIN */
+.map-card{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.map-card-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.map-card-title{font-size:14px;font-weight:700;}
+.map-stats{display:flex;gap:16px;}
+.map-stat{font-family:var(--mono);font-size:11px;color:var(--ink3);}
+.map-stat span{color:var(--ink);font-weight:700;}
+.map-container{position:relative;background:var(--bg2);overflow:hidden;cursor:grab;touch-action:none;aspect-ratio:736/986;}
+.map-container:active{cursor:grabbing;}
+.map-wrapper{transform-origin:0 0;position:relative;width:100%;height:100%;}
+.map-img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;}
+.booths-overlay{position:absolute;inset:0;}
+.booth-btn{
+  position:absolute;cursor:pointer;
+  border:1px solid rgba(0,0,0,0.25);
+  font-family:var(--mono);font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;font-size:clamp(6px,0.9vw,11px);
+  border-radius:2px;
+}
+.booth-btn:hover{background:#1a1916 !important;color:#fefcfa !important;border-color:#1a1916;z-index:100;}
+.booth-btn.sold{background:#374151 !important;color:#9ca3af !important;cursor:default;opacity:0.7;}
+.booth-btn.sold::after{content:'SOLD';position:absolute;font-size:0.5em;bottom:2px;font-weight:800;letter-spacing:0.5px;color:#9ca3af;}
+.booth-btn.pending{background:#fef3e8 !important;color:var(--amber) !important;border-color:var(--amber);}
+.booth-btn.pending::after{content:'PEND';position:absolute;font-size:0.5em;bottom:2px;font-weight:800;color:var(--amber);}
+.booth-btn.selected{outline:3px solid var(--amber);outline-offset:2px;z-index:99;}
+.zoom-controls{position:absolute;bottom:14px;right:14px;z-index:100;display:flex;flex-direction:column;gap:5px;}
+.zoom-btn{width:34px;height:34px;background:var(--white);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;font-weight:700;color:var(--ink2);transition:all 0.15s;}
+.zoom-btn:hover{background:var(--bg2);}
+.zoom-level{position:absolute;bottom:14px;left:14px;background:rgba(254,252,250,0.92);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-family:var(--mono);font-size:10px;color:var(--ink3);}
+
+/* SIDE PANEL */
+.side-panel{display:flex;flex-direction:column;gap:16px;position:sticky;top:68px;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.stat-card::before{content:'';display:block;height:2px;border-radius:1px;margin-bottom:10px;}
+.stat-card.amber::before{background:var(--amber);}
+.stat-card.green::before{background:var(--green);}
+.stat-card.red::before{background:var(--red);}
+.stat-card.yellow::before{background:var(--yellow);}
+.stat-label{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
+.stat-num{font-family:var(--serif);font-size:28px;font-style:italic;}
+
+/* BOOTH DETAIL */
+.detail-card{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.detail-empty{padding:28px 18px;text-align:center;color:var(--ink3);}
+.detail-empty-icon{font-family:var(--mono);font-size:24px;margin-bottom:8px;opacity:0.3;}
+.detail-content{display:none;}
+.detail-content.show{display:block;}
+.detail-head{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.detail-ref{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber);}
+.detail-status{font-size:9px;font-weight:700;padding:3px 8px;border-radius:100px;font-family:var(--mono);}
+.detail-body{padding:16px 18px;}
+.detail-row{display:flex;justify-content:space-between;font-size:12px;padding:7px 0;border-bottom:1px solid var(--border);}
+.detail-row:last-child{border-bottom:none;}
+.detail-label{color:var(--ink3);}
+.detail-val{font-weight:600;color:var(--ink);}
+.detail-actions{padding:14px 18px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.btn-action{width:100%;padding:11px;border-radius:100px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all 0.2s;}
+.btn-sold{background:var(--red);color:white;}
+.btn-sold:hover{background:#a93226;}
+.btn-available{background:var(--green-bg);color:var(--green);border:1px solid rgba(26,107,60,0.2);}
+.btn-available:hover{background:rgba(26,107,60,0.15);}
+.btn-pending{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);}
+.btn-pending:hover{background:rgba(212,98,10,0.12);}
+
+/* BOOKING LIST */
+.bookings-card{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;max-height:400px;overflow-y:auto;}
+.bookings-card::-webkit-scrollbar{width:3px;}
+.bookings-card::-webkit-scrollbar-thumb{background:var(--border);}
+.bookings-head{padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;position:sticky;top:0;background:var(--white);z-index:10;}
+.ops-card{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+.ops-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.ops-title{font-size:13px;font-weight:700;}
+.ops-action{border:1px solid var(--border);background:transparent;color:var(--ink2);border-radius:100px;padding:6px 10px;font-family:var(--sans);font-size:10px;font-weight:700;cursor:pointer;}
+.ops-action:hover{background:var(--bg2);color:var(--ink);}
+.ops-body{padding:12px 16px;display:flex;flex-direction:column;gap:10px;}
+.ops-status{border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--bg);}
+.ops-status.good{border-color:rgba(26,107,60,0.25);background:var(--green-bg);}
+.ops-status.warn{border-color:var(--amber-border);background:var(--amber-bg);}
+.ops-kicker{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;}
+.ops-main{font-size:12px;font-weight:700;color:var(--ink);}
+.ops-sub{font-size:11px;color:var(--ink2);line-height:1.5;margin-top:4px;}
+.ops-list{max-height:190px;overflow:auto;border-top:1px solid var(--border);}
+.ops-event{padding:10px 16px;border-bottom:1px solid var(--border);font-size:11px;}
+.ops-event:last-child{border-bottom:none;}
+.ops-event.error,.ops-event.critical{background:var(--red-bg);}
+.ops-event.warning{background:var(--yellow-bg);}
+.ops-event-title{font-weight:700;color:var(--ink);margin-bottom:3px;}
+.ops-event-meta{font-family:var(--mono);font-size:9px;color:var(--ink3);text-transform:uppercase;letter-spacing:.6px;}
+.booking-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;}
+.booking-item:last-child{border-bottom:none;}
+.booking-item:hover{background:var(--bg2);}
+.booking-item.selected{background:var(--amber-bg);}
+.bi-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.bi-ref{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--amber);}
+.bi-status{font-size:9px;font-weight:700;padding:2px 7px;border-radius:100px;}
+.bi-name{font-size:12px;font-weight:600;color:var(--ink);}
+.bi-biz{font-size:11px;color:var(--ink3);}
+.status-sold{background:var(--red-bg);color:var(--red);}
+.status-pending{background:var(--yellow-bg);color:var(--yellow);}
+.status-paypal_pending{background:var(--red-bg);color:var(--red);}
+.status-available{background:var(--green-bg);color:var(--green);}
+
+/* SEARCH */
+.search-bar{padding:12px 16px;border-bottom:1px solid var(--border);}
+.search-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;font-family:var(--sans);font-size:12px;color:var(--ink);outline:none;transition:border-color 0.2s;}
+.search-input:focus{border-color:var(--amber);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,25,22,0.5);backdrop-filter:blur(6px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border:1px solid var(--border);border-radius:16px;width:100%;max-width:440px;box-shadow:0 24px 64px rgba(0,0,0,0.12);animation:mi 0.25s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes mi{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.modal-head{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-title{font-family:var(--serif);font-size:20px;font-style:italic;}
+.modal-x{background:none;border:1px solid var(--border);color:var(--ink2);width:28px;height:28px;border-radius:8px;cursor:pointer;}
+.modal-x:hover{background:var(--bg2);}
+.modal-body{padding:18px 20px;}
+.modal-foot{padding:12px 20px 18px;display:flex;gap:8px;border-top:1px solid var(--border);}
+.form-group{margin-bottom:12px;}
+.form-label{display:block;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;}
+.form-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-family:var(--sans);font-size:12px;color:var(--ink);outline:none;transition:border-color 0.2s;}
+.form-input:focus{border-color:var(--amber);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-p{flex:2;background:var(--amber);color:white;border:none;padding:11px;border-radius:100px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;}
+.btn-g{flex:1;background:transparent;border:1px solid var(--border);color:var(--ink2);padding:11px;border-radius:100px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);border-radius:100px;padding:9px 20px;font-size:12px;font-weight:600;color:white;z-index:3000;opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:8px;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* PASSWORD GATE */
+#pw-gate{position:fixed;inset:0;background:var(--ink);z-index:9999;display:flex;align-items:center;justify-content:center;}
+#pw-gate.hidden{display:none;}
+.pw-box{background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:40px;width:100%;max-width:360px;text-align:center;}
+.pw-logo{font-family:var(--sans);font-size:14px;font-weight:800;color:var(--ink);margin-bottom:24px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.pw-logo-mark{width:24px;height:24px;background:var(--amber);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800;}
+.pw-title{font-family:var(--serif);font-size:22px;font-style:italic;color:var(--ink);margin-bottom:6px;}
+.pw-sub{font-size:11px;color:var(--ink3);font-family:var(--mono);margin-bottom:24px;}
+.pw-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--mono);font-size:14px;color:var(--ink);outline:none;text-align:center;letter-spacing:2px;transition:border-color 0.2s;margin-bottom:12px;}
+.pw-input:focus{border-color:var(--amber);}
+.pw-btn{width:100%;background:var(--amber);color:white;border:none;padding:12px;border-radius:100px;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.pw-btn:hover{background:var(--amber-light);}
+.pw-error{font-size:11px;color:var(--red);margin-top:8px;min-height:16px;font-family:var(--mono);}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE — blocks access until correct password is entered -->
+<div id="pw-gate">
+  <div class="pw-box">
+    <div class="pw-logo"><div class="pw-logo-mark">T</div>Tiregan Admin</div>
+    <div class="pw-title">Restricted Access</div>
+    <div class="pw-sub">TCICS INTERNAL · ADMIN ONLY</div>
+    <input class="pw-input" type="email" id="adminEmail" placeholder="Admin email" autocomplete="username">
+    <input class="pw-input" type="password" id="pwInput" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')checkPassword()">
+    <button class="pw-btn" onclick="checkPassword()">Unlock →</button>
+    <div class="pw-error" id="pwError"></div>
+  </div>
+</div>
+
+<script>
+const adminAuthClient = supabase.createClient(
+  'https://your-project-ref.supabase.co',
+  'YOUR_SUPABASE_PUBLISHABLE_KEY'
+);
+
+adminAuthClient.auth.getSession().then(({ data }) => {
+  if (data.session) document.getElementById('pw-gate').classList.add('hidden');
+});
+
+// Rate limit login attempts — max 5 per 15 minutes
+function checkLoginRateLimit() {
+  const now  = Date.now();
+  const data = JSON.parse(sessionStorage.getItem('pw_rl') || '{"attempts":[]}');
+  data.attempts = data.attempts.filter(t => now - t < 15 * 60 * 1000);
+  if (data.attempts.length >= 5) {
+    const wait = Math.ceil((15 * 60 * 1000 - (now - data.attempts[0])) / 60000);
+    return { allowed: false, wait };
+  }
+  data.attempts.push(now);
+  sessionStorage.setItem('pw_rl', JSON.stringify(data));
+  return { allowed: true };
+}
+
+async function checkPassword() {
+  const rate = checkLoginRateLimit();
+  if (!rate.allowed) {
+    document.getElementById('pwError').textContent = `Too many attempts. Try again in ${rate.wait} min.`;
+    return;
+  }
+
+  const email = document.getElementById('adminEmail').value.trim();
+  const input = document.getElementById('pwInput').value;
+  if (!email || !input) return;
+
+  const { error } = await adminAuthClient.auth.signInWithPassword({ email, password: input });
+  if (error) {
+    document.getElementById('pwError').textContent = 'Incorrect email or password.';
+    document.getElementById('pwInput').value = '';
+    document.getElementById('pwInput').focus();
+    return;
+  }
+
+  document.getElementById('pw-gate').classList.add('hidden');
+  document.getElementById('pwError').textContent = '';
+  loadAll();
+}
+</script>
+
+<nav>
+  <a href="tiregan.html" class="logo"><div class="logo-mark">V</div>Tiregan 2026</a>
+  <span class="nav-badge">ADMIN</span>
+  <div class="nav-right">
+    <a href="tiregan.html" class="nav-btn">Buyer View</a>
+    <button class="nav-btn" onclick="exportCSV()">↓ Export</button>
+  </div>
+</nav>
+
+<div class="main">
+  <!-- MAP -->
+  <div>
+    <div class="map-card">
+      <div class="map-card-head">
+        <div class="map-card-title">Booth Map — Admin View</div>
+        <div class="map-stats">
+          <div class="map-stat">Available: <span id="statAvail">—</span></div>
+          <div class="map-stat">Sold: <span id="statSold">—</span></div>
+          <div class="map-stat">Pending: <span id="statPending">—</span></div>
+          <div class="map-stat">Revenue: <span id="statRevenue">—</span></div>
+        </div>
+      </div>
+      <div class="map-container" id="mapContainer">
+        <div class="map-wrapper" id="mapWrapper">
+          <img src="https://image2url.com/r2/default/images/1772232052982-9762ec3e-f714-4c4c-97e6-34483237440a.png"
+               alt="Tiregan Floor Plan" class="map-img" draggable="false">
+          <div class="booths-overlay" id="boothsOverlay"></div>
+        </div>
+        <div class="zoom-controls">
+          <button class="zoom-btn" onclick="zoomIn()">+</button>
+          <button class="zoom-btn" onclick="zoomReset()">◎</button>
+          <button class="zoom-btn" onclick="zoomOut()">−</button>
+        </div>
+        <div class="zoom-level"><span id="zoomLevel">100</span>%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDE -->
+  <div class="side-panel">
+    <!-- STATS -->
+    <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="stat-card green"><div class="stat-label">Available</div><div class="stat-num" id="sAvail">—</div></div>
+      <div class="stat-card red"><div class="stat-label">Sold</div><div class="stat-num" id="sSold">—</div></div>
+      <div class="stat-card yellow"><div class="stat-label">Pending</div><div class="stat-num" id="sPending">—</div></div>
+      <div class="stat-card amber"><div class="stat-label">Collected Revenue</div><div class="stat-num" id="sRevenue">—</div></div>
+      <div class="stat-card green" style="grid-column:span 2;"><div class="stat-label">Potential Revenue (if all sold)</div><div class="stat-num" id="sPotential">—</div></div>
+    </div>
+
+    <!-- SELECTED BOOTH DETAIL -->
+    <div class="detail-card">
+      <div class="detail-empty" id="detailEmpty">
+        <div class="detail-empty-icon">⬡</div>
+        <div style="font-size:12px;">Click a booth on the map to manage it</div>
+      </div>
+      <div class="detail-content" id="detailContent">
+        <div class="detail-head">
+          <div class="detail-ref" id="detailRef">—</div>
+          <div class="detail-status" id="detailStatus">—</div>
+        </div>
+        <div class="detail-body">
+          <div class="detail-row"><span class="detail-label">Type</span><span class="detail-val" id="detailType">—</span></div>
+          <div class="detail-row"><span class="detail-label">Price</span><span class="detail-val" id="detailPrice">—</span></div>
+          <div class="detail-row"><span class="detail-label">Size</span><span class="detail-val" id="detailSize">—</span></div>
+          <div class="detail-row"><span class="detail-label">Buyer</span><span class="detail-val" id="detailBuyer">—</span></div>
+          <div class="detail-row"><span class="detail-label">Business</span><span class="detail-val" id="detailBiz">—</span></div>
+          <div class="detail-row"><span class="detail-label">Email</span><span class="detail-val" id="detailEmail">—</span></div>
+          <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-val" id="detailPhone">—</span></div>
+          <div class="detail-row"><span class="detail-label">Booked At</span><span class="detail-val" id="detailDate">—</span></div>
+          <div class="detail-row"><span class="detail-label">Payment</span><span class="detail-val" id="detailPayment">—</span></div>
+          <div class="detail-row"><span class="detail-label">Capture</span><span class="detail-val" id="detailCapture">—</span></div>
+          <div class="detail-row"><span class="detail-label">Receipt</span><span class="detail-val" id="detailReceipt">—</span></div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn-action btn-sold"      id="btnMarkSold"      onclick="setBoothStatus('sold')">Mark as Sold</button>
+          <button class="btn-action btn-pending"   id="btnMarkPending"   onclick="setBoothStatus('pending')">Mark as Pending</button>
+          <button class="btn-action btn-available" id="btnMarkAvailable" onclick="setBoothStatus('available')">Mark as Available</button>
+          <button class="btn-action" style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);" onclick="openAddModal()">+ Add Booking Info</button>
+          <button class="btn-action btn-pending" id="btnRetryReceipt" onclick="retrySelectedReceipt()">Retry Receipt Email</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPS HEALTH -->
+    <div class="ops-card">
+      <div class="ops-head">
+        <div class="ops-title">Operations Health</div>
+        <button class="ops-action" onclick="runHealthCheck()">Run Check</button>
+      </div>
+      <div class="ops-body">
+        <div class="ops-status" id="opsStatusBox">
+          <div class="ops-kicker">Live monitor</div>
+          <div class="ops-main" id="opsMain">Loading health signals</div>
+          <div class="ops-sub" id="opsSub">Checking receipt errors, pending payments, and stale holds.</div>
+        </div>
+      </div>
+      <div class="ops-list" id="opsList"></div>
+    </div>
+
+    <!-- BOOKINGS LIST -->
+    <div class="bookings-card">
+      <div class="bookings-head">All Bookings <span id="bookingCount" style="color:var(--ink3);font-size:11px;font-family:var(--mono);"></span></div>
+      <div class="search-bar">
+        <input class="search-input" placeholder="Search name, email, booth..." oninput="filterList(this.value)">
+      </div>
+      <div id="bookingsList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BOOKING MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="addModalTitle">Add Booking</div>
+      <button class="modal-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="addBoothId">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="aFirstName" placeholder="Darius"></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="aLastName" placeholder="Tehrani"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Business Name</label><input class="form-input" id="aBizName"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="aEmail" type="email"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="aPhone" type="tel"></div>
+      <div class="form-group"><label class="form-label">Business Type</label><input class="form-input" id="aBizType" placeholder="Food & Beverage, Retail..."></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-input" id="aStatus">
+          <option value="pending">Pending</option>
+          <option value="sold">Sold / Paid</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-g" onclick="closeModal()">Cancel</button>
+      <button class="btn-p" onclick="saveBooking()">Save Booking</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL  = 'https://your-project-ref.supabase.co';
+const SUPABASE_ANON = 'YOUR_SUPABASE_PUBLISHABLE_KEY';
+const sb = adminAuthClient;
+
+const BOOTHS = [
+  { id:'TEST1', x:4.0, y:4.0, w:6.5, h:2.6, rotation:0, color:'rgb(26,107,60)', type:'TEST', price:1 },
+  { id:'FK1',  x:27.61, y:23.5,  w:5.92, h:2.92, rotation:-13.53, color:'rgb(221,91,68)',   type:'FK', price:2500 },
+  { id:'FK2',  x:24.73, y:14.3,  w:5.85, h:2.75, rotation:-10.79, color:'rgb(221,91,68)',   type:'FK', price:2500 },
+  { id:'FT1',  x:58.7,  y:16.84, w:5.0,  h:2.98, rotation:-19.24, color:'rgb(221,91,68)',   type:'FT', price:1500 },
+  { id:'FT2',  x:56.1,  y:7.91,  w:4.98, h:2.94, rotation:-18.3,  color:'rgb(221,91,68)',   type:'FT', price:1500 },
+  { id:'F1',   x:33.29, y:22.91, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F2',   x:36.42, y:22.25, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F3',   x:39.56, y:21.58, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F',  price:700  },
+  { id:'F4',   x:42.7,  y:20.92, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F5',   x:45.84, y:20.25, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F6',   x:48.97, y:19.59, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F7',   x:52.11, y:18.92, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F8',   x:55.25, y:18.26, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F9',   x:52.63, y:9.27,  w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F10',  x:49.48, y:9.9,   w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F11',  x:46.33, y:10.52, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F12',  x:43.17, y:11.15, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F13',  x:40.02, y:11.78, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F14',  x:36.87, y:12.4,  w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F15',  x:33.72, y:13.03, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'F16',  x:30.57, y:13.66, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F',  price:1000  },
+  { id:'A1',   x:12.51, y:37.09, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A2',   x:14.15, y:36.86, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A3',   x:15.79, y:36.63, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A4',   x:17.44, y:36.4,  w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A5',   x:19.08, y:36.16, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A6',   x:20.72, y:35.93, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A7',   x:13.83, y:38.74, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A8',   x:15.47, y:38.51, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A9',   x:17.11, y:38.28, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A10',  x:18.76, y:38.04, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'A11',  x:20.4,  y:37.81, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A',  price:290  },
+  { id:'E1',   x:15.0,  y:32.83, w:1.6,  h:3.93, rotation:-10.72, color:'rgb(112,146,190)', type:'E',  price:1500, zIndex:10 },
+  { id:'E2',   x:17.06, y:32.49, w:1.6,  h:3.93, rotation:-10.72, color:'rgb(112,146,190)', type:'E',  price:1500, zIndex:11 },
+  ...Array.from({length:56},(_,i)=>({
+    id:String(i+1),
+    x:[67.75,65.94,64.13,62.34,60.53,58.73,56.93,55.13,53.36,51.58,62.7,60.89,59.09,57.29,55.49,53.68,51.89,50.08,48.31,46.53,42.54,39.91,37.28,34.65,32.02,29.39,26.77,25.14,25.14,25.14,25.14,25.14,25.14,25.14,25.14,18.76,19.21,19.7,19.7,19.71,18.71,19.12,19.52,19.93,19.16,11.55,12.0,13.59,14.27,14.95,16.17,16.58,16.98,17.38,5.98,13.86][i],
+    y:[47.39,49.18,50.97,52.77,54.56,56.35,58.15,59.94,61.76,63.56,44.49,46.29,48.08,49.88,51.67,53.46,55.26,57.05,58.87,60.67,62.01,61.41,60.81,60.21,59.61,59.02,58.42,54.67,52.23,48.48,45.84,42.49,39.86,35.4,32.96,32.15,33.94,39.35,41.28,43.21,45.23,47.19,49.14,51.1,53.35,33.17,34.96,39.76,41.58,43.41,45.52,47.47,49.43,51.38,34.09,55.9][i],
+    w:[3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.44,3.05,3.05,3.05,3.05,3.05,3.05,3.05,2.45,2.45,2.45,2.45,2.45,2.45,2.45,2.45,2.86,2.86,2.45,2.45,2.45,2.76,2.76,2.76,2.76,2.69,2.86,2.86,2.97,2.97,2.97,2.76,2.76,2.76,2.76,3.0,2.97][i],
+    h:[2.54,2.54,2.55,2.54,2.54,2.55,2.54,2.54,2.54,2.54,2.54,2.54,2.55,2.54,2.54,2.55,2.54,2.54,2.54,2.54,2.28,2.28,2.28,2.28,2.28,2.28,2.28,1.83,1.83,1.83,1.83,1.83,1.83,1.83,1.83,2.13,2.13,1.83,1.83,1.83,2.06,2.06,2.06,2.06,2.01,2.13,2.13,2.22,2.22,2.22,2.06,2.06,2.06,2.06,2.31,2.28][i],
+    rotation:[36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,36.69,17.02,17.02,17.02,17.02,17.02,17.02,17.02,0,0,0,0,0,0,0,0,-10.72,-10.72,0,0,0,-7.87,-7.87,-7.87,-7.87,-5.96,-10.72,-10.72,-14.29,-14.29,-14.29,-7.87,-7.87,-7.87,-7.87,-17.51,-16.41][i],
+    color:'rgb(255,255,255)',type:'R',price:690
+  }))
+];
+
+const TYPE_NAMES = { TEST:'Payment Test Booth', R:'Regular Booth', E:'Elite VIP', A:'Handicraft Table', FK:'Kebab Booth', FT:'Food Truck', F:'Food Booth' };
+const SPECIAL_BOOTH_PRICES = { '34':600, '31':750, '32':0, 'F3':700 };
+
+function boothListedPrice(booth) {
+  return SPECIAL_BOOTH_PRICES[booth?.id] ?? booth?.price ?? 0;
+}
+
+function boothPriceText(booth) {
+  if (booth?.id === '31') return '$750 CAD package with Booth 32';
+  if (booth?.id === '32') return 'Included with Booth 31 package';
+  const price = boothListedPrice(booth);
+  return price ? `$${price.toLocaleString()} CAD` : 'Contact';
+}
+
+function bookingAmount(booking) {
+  const paidAmount = Number(booking?.expected_amount_cad || 0);
+  if (Number.isFinite(paidAmount) && paidAmount > 0) return paidAmount;
+  const booth = BOOTHS.find(x => x.id === booking?.booth_id);
+  return boothListedPrice(booth);
+}
+const TYPE_SIZES = { TEST:'Payment test', R:'3m × 3m', E:'6m × 3m', A:'180cm × 75cm', FK:'Varies', FT:'Varies', F:'Varies' };
+
+let allBookings = [];
+let expiredPendingBookings = [];
+let opsEvents = [];
+let healthSnapshots = [];
+let boothStatusMap = {}; // id -> {status, booking}
+let selectedBoothId = null;
+let currentZoom = 1, currentX = 0, currentY = 0, isDragging = false, startX, startY;
+
+// ── LOAD ──
+async function expirePendingHolds() {
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/expire-tiregan-pending`, { method: 'POST' });
+  } catch (e) {
+    console.warn('expired pending cleanup unavailable', e);
+  }
+}
+
+async function loadAll() {
+  await expirePendingHolds();
+  try {
+    const { data } = await sb.from('tiregan_booths').select('*').order('created_at', { ascending: false });
+    const rows = data || [];
+    const now = Date.now();
+    expiredPendingBookings = rows.filter(b => b.status === 'pending' && (!b.expires_at || new Date(b.expires_at).getTime() <= now));
+    allBookings = rows.filter(b => !(b.status === 'pending' && (!b.expires_at || new Date(b.expires_at).getTime() <= now)));
+    boothStatusMap = {};
+    allBookings.forEach(b => {
+      if (!boothStatusMap[b.booth_id] || ['sold', 'paypal_pending'].includes(b.status)) {
+        boothStatusMap[b.booth_id] = b;
+      }
+    });
+  } catch(e) { console.warn('tiregan_booths not set up yet'); }
+  await loadOpsSignals();
+  renderBooths();
+  renderStats();
+  renderOpsHealth();
+  renderList(allBookings);
+  if (selectedBoothId) selectBooth(BOOTHS.find(b => b.id === selectedBoothId));
+}
+
+async function loadOpsSignals() {
+  try {
+    const [{ data: events }, { data: snapshots }] = await Promise.all([
+      sb.from('tiregan_ops_events').select('*').order('created_at', { ascending: false }).limit(8),
+      sb.from('tiregan_daily_health_snapshots').select('*').order('created_at', { ascending: false }).limit(1),
+    ]);
+    opsEvents = events || [];
+    healthSnapshots = snapshots || [];
+  } catch (e) {
+    opsEvents = [];
+    healthSnapshots = [];
+    console.warn('ops tables not available yet', e);
+  }
+}
+
+function renderStats() {
+  const total     = BOOTHS.length;
+  const sold      = Object.values(boothStatusMap).filter(b => b.status === 'sold' || b.status === 'paypal_pending').length;
+  const pending   = Object.values(boothStatusMap).filter(b => b.status === 'pending').length;
+  const available = total - sold - pending;
+
+  const revenue = Object.values(boothStatusMap).filter(b => b.status === 'sold').reduce((s, b) => {
+    return s + bookingAmount(b);
+  }, 0);
+
+  // Potential = sum of ALL booth prices
+  const potential = BOOTHS.reduce((s, b) => s + boothListedPrice(b), 0);
+
+  const fmt = v => v >= 1000 ? `$${(v/1000).toFixed(1)}k` : `$${v}`;
+
+  document.getElementById('statAvail').textContent   = available;
+  document.getElementById('statSold').textContent    = sold;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statRevenue').textContent = fmt(revenue);
+  document.getElementById('sAvail').textContent      = available;
+  document.getElementById('sSold').textContent       = sold;
+  document.getElementById('sPending').textContent    = pending;
+  document.getElementById('sRevenue').textContent    = fmt(revenue);
+  document.getElementById('sPotential').textContent  = fmt(potential);
+}
+
+function renderOpsHealth() {
+  const box = document.getElementById('opsStatusBox');
+  const main = document.getElementById('opsMain');
+  const sub = document.getElementById('opsSub');
+  const list = document.getElementById('opsList');
+  if (!box || !main || !sub || !list) return;
+
+  const receiptErrors = allBookings.filter(b => b.receipt_error);
+  const paidPrimaryBookings = allBookings.filter(b =>
+    b.status === 'sold' &&
+    Number(b.expected_amount_cad || 0) > 0 &&
+    (b.paypal_order_id || b.paypal_capture_id)
+  );
+  const soldMissingReceipt = paidPrimaryBookings.filter(b => !b.receipt_sent_at);
+  const stalePending = expiredPendingBookings;
+  const paypalPending = allBookings.filter(b => b.status === 'paypal_pending');
+  const issueCount = receiptErrors.length + soldMissingReceipt.length + stalePending.length + paypalPending.length;
+
+  box.className = `ops-status ${issueCount ? 'warn' : 'good'}`;
+  main.textContent = issueCount ? `${issueCount} item${issueCount === 1 ? '' : 's'} need review` : 'All live health checks look clean';
+  const latest = healthSnapshots[0]?.created_at ? new Date(healthSnapshots[0].created_at).toLocaleString('en-CA', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : 'No snapshot yet';
+  sub.textContent = issueCount
+    ? `${receiptErrors.length} receipt errors, ${soldMissingReceipt.length} paid rows missing receipts, ${paypalPending.length} PayPal pending, ${stalePending.length} stale holds. Latest snapshot: ${latest}.`
+    : `No receipt errors or stale holds detected. Latest snapshot: ${latest}.`;
+
+  list.textContent = '';
+  const visibleEvents = opsEvents.filter(event =>
+    !['health_check_completed', 'reservation_not_found'].includes(event.event_type || '')
+  );
+  if (!visibleEvents.length) {
+    const empty = document.createElement('div');
+    empty.className = 'ops-event';
+    empty.textContent = 'No urgent ops events recorded.';
+    list.appendChild(empty);
+    return;
+  }
+
+  visibleEvents.forEach(event => {
+    const row = document.createElement('div');
+    row.className = `ops-event ${event.severity || ''}`;
+    const title = document.createElement('div');
+    title.className = 'ops-event-title';
+    title.textContent = event.message || event.event_type || 'Ops event';
+    const meta = document.createElement('div');
+    meta.className = 'ops-event-meta';
+    const when = event.created_at ? new Date(event.created_at).toLocaleString('en-CA', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) : '';
+    meta.textContent = `${event.severity || 'info'} · ${event.source || 'system'} · ${event.booth_id || 'no booth'} · ${when}`;
+    row.append(title, meta);
+    list.appendChild(row);
+  });
+}
+
+// ── RENDER MAP ──
+function renderBooths() {
+  const overlay = document.getElementById('boothsOverlay');
+  overlay.innerHTML = '';
+  BOOTHS.forEach(booth => {
+    const bData  = boothStatusMap[booth.id];
+    const status = bData?.status || 'available';
+    const btn    = document.createElement('button');
+    btn.className = `booth-btn ${status} ${selectedBoothId === booth.id ? 'selected' : ''}`;
+    btn.dataset.id = booth.id;
+    btn.style.cssText = `left:${booth.x}%;top:${booth.y}%;width:${booth.w}%;height:${booth.h}%;background:${booth.color};color:#111;`;
+    if (booth.rotation) btn.style.transform = `rotate(${booth.rotation}deg)`;
+    if (booth.zIndex)   btn.style.zIndex    = booth.zIndex;
+    if (booth.type === 'A') btn.style.fontSize = 'clamp(4px,0.45vw,7px)';
+    else if (['F','FK','FT','E'].includes(booth.type)) btn.style.fontSize = 'clamp(6px,0.65vw,10px)';
+    else btn.style.fontSize = 'clamp(6px,0.85vw,11px)';
+    btn.textContent = booth.id;
+    btn.onclick = (e) => { e.stopPropagation(); selectBooth(booth); };
+    overlay.appendChild(btn);
+  });
+}
+
+// ── SELECT BOOTH ──
+function selectBooth(booth) {
+  if (!booth) return;
+  selectedBoothId = booth.id;
+  document.querySelectorAll('.booth-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector(`[data-id="${booth.id}"]`)?.classList.add('selected');
+
+  const bData  = boothStatusMap[booth.id];
+  const status = bData?.status || 'available';
+
+  document.getElementById('detailEmpty').style.display = 'none';
+  document.getElementById('detailContent').classList.add('show');
+
+  document.getElementById('detailRef').textContent   = `Booth ${booth.id}`;
+  document.getElementById('detailType').textContent  = TYPE_NAMES[booth.type] || 'Booth';
+  document.getElementById('detailPrice').textContent = boothPriceText(booth);
+  document.getElementById('detailSize').textContent  = TYPE_SIZES[booth.type] || '—';
+  document.getElementById('detailBuyer').textContent = bData?.contact_name  || '—';
+  document.getElementById('detailBiz').textContent   = bData?.business_name || '—';
+  document.getElementById('detailEmail').textContent = bData?.contact_email || '—';
+  document.getElementById('detailPhone').textContent = bData?.phone         || '—';
+  document.getElementById('detailDate').textContent  = bData?.created_at ? new Date(bData.created_at).toLocaleDateString('en-CA', { month:'short', day:'numeric', year:'numeric' }) : '—';
+  document.getElementById('detailPayment').textContent = bData?.payment_status || '—';
+  document.getElementById('detailCapture').textContent = bData?.paypal_capture_id || '—';
+  document.getElementById('detailReceipt').textContent = bData?.receipt_error
+    ? `Error: ${bData.receipt_error.slice(0, 80)}`
+    : bData?.receipt_sent_at
+      ? `Sent ${new Date(bData.receipt_sent_at).toLocaleDateString('en-CA', { month:'short', day:'numeric' })}`
+      : bData?.status === 'sold' ? 'Not sent yet' : '—';
+
+  const statusEl = document.getElementById('detailStatus');
+  const statusStyles = { available:'background:var(--green-bg);color:var(--green)', sold:'background:var(--red-bg);color:var(--red)', paypal_pending:'background:var(--red-bg);color:var(--red)', pending:'background:var(--yellow-bg);color:var(--yellow)' };
+  statusEl.style.cssText = statusStyles[status] || statusStyles.available;
+  statusEl.textContent   = status.toUpperCase();
+
+  // Show/hide buttons
+  document.getElementById('btnMarkSold').style.display      = status !== 'sold'      ? 'block' : 'none';
+  document.getElementById('btnMarkPending').style.display   = status !== 'pending'   ? 'block' : 'none';
+  document.getElementById('btnMarkAvailable').style.display = status !== 'available' ? 'block' : 'none';
+  document.getElementById('btnRetryReceipt').style.display  = bData?.status === 'sold' ? 'block' : 'none';
+}
+
+// ── SET STATUS ──
+async function setBoothStatus(status) {
+  if (!selectedBoothId) return;
+  const existing = boothStatusMap[selectedBoothId];
+
+  if (status === 'available') {
+    // Delete the record entirely so the booth shows as truly available
+    if (existing) {
+      const { error } = await sb.from('tiregan_booths').delete().eq('id', existing.id);
+      if (error) { showToast('×', error.message); return; }
+    }
+  } else if (existing) {
+    const { error } = await sb.from('tiregan_booths').update({ status }).eq('id', existing.id);
+    if (error) { showToast('×', error.message); return; }
+  } else {
+    const { error } = await sb.from('tiregan_booths').insert({ booth_id: selectedBoothId, status, event_name: 'Tiregan 2026' });
+    if (error) { showToast('×', error.message); return; }
+  }
+  showToast('✓', `Booth ${selectedBoothId} → ${status}`);
+  await loadAll();
+}
+
+async function authHeaders() {
+  const { data } = await sb.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Admin session expired');
+  return {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_ANON,
+    'Authorization': `Bearer ${token}`,
+  };
+}
+
+async function runHealthCheck() {
+  try {
+    document.getElementById('opsMain').textContent = 'Running health check';
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/tiregan-health-report`, {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ email: true }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || 'Health check failed');
+    showToast('OK', payload.status === 'healthy' ? 'Health check passed' : 'Health check needs review');
+    await loadAll();
+  } catch (error) {
+    showToast('Error', error.message || 'Health check failed');
+  }
+}
+
+async function retrySelectedReceipt() {
+  const existing = boothStatusMap[selectedBoothId];
+  if (!existing) return;
+  try {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/tiregan-retry-receipt`, {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ reservation_id: existing.id, force: true }),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || 'Receipt retry failed');
+    showToast('OK', `Receipt sent for booth ${payload.booth_id || selectedBoothId}`);
+    await loadAll();
+  } catch (error) {
+    showToast('Error', error.message || 'Receipt retry failed');
+  }
+}
+
+// ── BOOKING LIST ──
+function renderList(bookings) {
+  const el = document.getElementById('bookingsList');
+  document.getElementById('bookingCount').textContent = `(${bookings.length})`;
+  el.textContent = '';
+  if (bookings.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'padding:20px;text-align:center;color:var(--ink3);font-size:12px;';
+    empty.textContent = 'No bookings yet';
+    el.appendChild(empty);
+    return;
+  }
+
+  bookings.forEach(b => {
+    const item = document.createElement('div');
+    item.className = `booking-item ${selectedBoothId === b.booth_id ? 'selected' : ''}`;
+    item.onclick = () => selectBooth(BOOTHS.find(x => x.id === b.booth_id));
+
+    const top = document.createElement('div');
+    top.className = 'bi-top';
+
+    const ref = document.createElement('span');
+    ref.className = 'bi-ref';
+    ref.textContent = `Booth ${b.booth_id || '—'}`;
+
+    const status = document.createElement('span');
+    const normalizedStatus = ['sold', 'pending', 'paypal_pending'].includes(b.status) ? b.status : 'available';
+    status.className = `bi-status status-${normalizedStatus}`;
+    status.textContent = normalizedStatus === 'paypal_pending' ? 'sold / pending payment' : normalizedStatus;
+
+    const name = document.createElement('div');
+    name.className = 'bi-name';
+    name.textContent = b.contact_name || '—';
+
+    const biz = document.createElement('div');
+    biz.className = 'bi-biz';
+    biz.textContent = `${b.business_name || '—'} · ${b.contact_email || ''}`;
+
+    top.append(ref, status);
+    item.append(top, name, biz);
+    el.appendChild(item);
+  });
+}
+
+function filterList(q) {
+  const ql = q.toLowerCase();
+  const filtered = allBookings.filter(b =>
+    b.booth_id?.toLowerCase().includes(ql) ||
+    b.contact_name?.toLowerCase().includes(ql) ||
+    b.contact_email?.toLowerCase().includes(ql) ||
+    b.business_name?.toLowerCase().includes(ql)
+  );
+  renderList(filtered);
+}
+
+// ── ADD BOOKING ──
+function openAddModal() {
+  if (!selectedBoothId) return;
+  document.getElementById('addBoothId').value = selectedBoothId;
+  document.getElementById('addModalTitle').textContent = `Add Booking — Booth ${selectedBoothId}`;
+  document.getElementById('addModal').classList.add('open');
+}
+
+async function saveBooking() {
+  const boothId = document.getElementById('addBoothId').value;
+  const name    = `${document.getElementById('aFirstName').value} ${document.getElementById('aLastName').value}`.trim();
+  const email   = document.getElementById('aEmail').value.trim();
+  const status  = document.getElementById('aStatus').value;
+
+  if (!name || !email) { showToast('×', 'Name and email required'); return; }
+
+  const existing = boothStatusMap[boothId];
+  const payload  = {
+    booth_id:      boothId,
+    status,
+    contact_name:  name,
+    contact_email: email,
+    business_name: document.getElementById('aBizName').value.trim(),
+    business_type: document.getElementById('aBizType').value.trim(),
+    phone:         document.getElementById('aPhone').value.trim(),
+    event_name:    'Tiregan 2026',
+  };
+
+  let error;
+  if (existing) {
+    ({ error } = await sb.from('tiregan_booths').update(payload).eq('id', existing.id));
+  } else {
+    ({ error } = await sb.from('tiregan_booths').insert(payload));
+  }
+
+  if (error) { showToast('×', error.message); return; }
+  showToast('✓', `Booth ${boothId} booking saved`);
+  closeModal();
+  await loadAll();
+}
+
+function closeModal() { document.getElementById('addModal').classList.remove('open'); }
+
+// ── EXPORT ──
+function exportCSV() {
+  const rows = [['Booth ID','Type','Status','Name','Business','Email','Phone','Price']];
+  const csvCell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  BOOTHS.forEach(b => {
+    const bData = boothStatusMap[b.id];
+    rows.push([b.id, TYPE_NAMES[b.type], bData?.status||'available', bData?.contact_name||'', bData?.business_name||'', bData?.contact_email||'', bData?.phone||'', boothListedPrice(b)||'']);
+  });
+  const csv  = rows.map(r => r.map(csvCell).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'tiregan-2026-booths.csv';
+  a.click();
+  showToast('↓', 'Exported to CSV');
+}
+
+// ── REALTIME ──
+sb.channel('tiregan-admin').on('postgres_changes',{event:'*',schema:'public',table:'tiregan_booths'},()=>loadAll()).subscribe();
+
+// ── ZOOM ──
+function zoomIn()    { applyZoom(currentZoom+0.3); }
+function zoomOut()   { applyZoom(currentZoom-0.3); }
+function zoomReset() { currentZoom=1;currentX=0;currentY=0;updateTransform(); }
+function applyZoom(nz,px,py) {
+  const c=document.getElementById('mapContainer');
+  px=px??c.offsetWidth/2; py=py??c.offsetHeight/2;
+  const old=currentZoom; currentZoom=Math.max(1,Math.min(4,nz));
+  const sc=currentZoom/old; currentX=px-(px-currentX)*sc; currentY=py-(py-currentY)*sc;
+  updateTransform();
+}
+function updateTransform() {
+  const w=document.getElementById('mapWrapper'),c=document.getElementById('mapContainer');
+  const minX=Math.min(0,c.offsetWidth-w.offsetWidth*currentZoom);
+  const minY=Math.min(0,c.offsetHeight-w.offsetHeight*currentZoom);
+  currentX=Math.max(minX,Math.min(0,currentX)); currentY=Math.max(minY,Math.min(0,currentY));
+  w.style.transform=`translate(${currentX}px,${currentY}px) scale(${currentZoom})`;
+  document.getElementById('zoomLevel').textContent=Math.round(currentZoom*100);
+}
+const mc=document.getElementById('mapContainer');
+mc.addEventListener('mousedown',e=>{if(e.target.classList.contains('booth-btn'))return;isDragging=true;startX=e.clientX-currentX;startY=e.clientY-currentY;mc.style.cursor='grabbing';e.preventDefault();});
+document.addEventListener('mousemove',e=>{if(!isDragging)return;currentX=e.clientX-startX;currentY=e.clientY-startY;updateTransform();});
+document.addEventListener('mouseup',()=>{isDragging=false;mc.style.cursor='grab';});
+mc.addEventListener('wheel',e=>{e.preventDefault();const r=mc.getBoundingClientRect();applyZoom(currentZoom+(e.deltaY<0?0.1:-0.1),e.clientX-r.left,e.clientY-r.top);},{passive:false});
+
+function showToast(icon,msg){
+  const t=document.getElementById('toast');
+  t.textContent='';
+  const span=document.createElement('span');
+  span.textContent=icon;
+  t.append(span, ` ${msg}`);
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+window.addEventListener('load', loadAll);
+window.addEventListener('resize', () => { renderBooths(); updateTransform(); });
+</script>
+</body>
+</html>

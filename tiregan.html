@@ -1,0 +1,1954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- OWASP: Content Security Policy — restricts what resources can load -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://your-project-ref.supabase.co https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com https://www.image2url.com https://image2url.com; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://www.image2url.com https://image2url.com; connect-src 'self' https://your-project-ref.supabase.co wss://your-project-ref.supabase.co https://www.paypal.com;">
+<!-- OWASP: Prevent clickjacking -->
+<meta http-equiv="X-Frame-Options" content="DENY">
+<!-- OWASP: Prevent MIME type sniffing -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<!-- OWASP: Referrer policy — don't leak URL to PayPal -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Tiregan 2026 — Book Your Booth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f2ed;--bg2:#edeae4;--white:#fefcfa;--ink:#1a1916;--ink2:#4a4843;--ink3:#9a9690;
+  --border:#d8d4cc;--border2:#c8c4bc;
+  --amber:#d4620a;--amber-light:#f07030;--amber-bg:#fdf0e8;--amber-border:#f0c8a8;
+  --green:#1a6b3c;--green-bg:#e8f5ee;--red:#c0392b;--red-bg:#fde8e8;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;
+  --serif:'Instrument Serif',serif;--sans:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);}
+
+/* NAV */
+nav{height:56px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:200;}
+.logo{font-size:16px;font-weight:800;letter-spacing:-0.5px;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:7px;}
+.logo-mark{width:22px;height:22px;background:var(--amber);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:800;}
+.nav-divider{width:1px;height:20px;background:var(--border);}
+.nav-back{font-size:12px;color:var(--ink3);text-decoration:none;font-weight:600;transition:color 0.15s;}
+.nav-back:hover{color:var(--ink);}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.nav-spots{font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;font-family:var(--mono);}
+.nav-spots.good{background:var(--green-bg);color:var(--green);}
+.nav-spots.low{background:var(--amber-bg);color:var(--amber);}
+
+/* HERO */
+.hero{background:var(--ink);padding:48px 28px 40px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%, rgba(212,98,10,0.15) 0%, transparent 60%);}
+.hero-inner{max-width:1100px;margin:0 auto;position:relative;}
+.hero-tag{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--amber);margin-bottom:14px;}
+.hero-title{font-family:var(--serif);font-size:clamp(36px,6vw,72px);font-style:italic;color:white;line-height:1.05;margin-bottom:8px;}
+.hero-sub{font-size:13px;color:rgba(255,255,255,0.5);font-family:var(--mono);letter-spacing:0.5px;margin-bottom:24px;}
+.hero-meta{display:flex;gap:24px;flex-wrap:wrap;}
+.hero-meta-item{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,0.6);}
+.hero-meta-item svg{opacity:0.5;}
+.hero-meta-val{color:white;font-weight:600;}
+
+/* MAIN LAYOUT */
+.main{max-width:1100px;margin:0 auto;padding:28px;display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;}
+
+/* MAP CARD */
+.map-card{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.map-card-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.map-card-title{font-size:14px;font-weight:700;}
+.map-card-hint{font-size:11px;color:var(--ink3);font-family:var(--mono);}
+.map-container{position:relative;background:var(--bg2);overflow:hidden;cursor:grab;touch-action:none;aspect-ratio:736/986;}
+.map-container:active{cursor:grabbing;}
+.map-wrapper{transform-origin:0 0;position:relative;width:100%;height:100%;}
+.map-img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;}
+.booths-overlay{position:absolute;inset:0;}
+
+/* BOOTH BUTTONS */
+.booth-btn{
+  position:absolute;cursor:pointer;
+  border:1px solid rgba(0,0,0,0.25);
+  font-family:var(--mono);font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;font-size:clamp(6px,0.9vw,11px);
+  border-radius:2px;
+}
+.booth-btn:hover{
+  background:#1a1916 !important;color:#fefcfa !important;
+  border-color:#1a1916;z-index:100;
+  box-shadow:0 4px 14px rgba(0,0,0,0.25);
+  transform:scale(1.08) !important;
+}
+.booth-btn.available{}
+.booth-btn.sold{
+  background:#9ca3af !important;color:#fff !important;
+  cursor:not-allowed;opacity:0.55;
+}
+.booth-btn.sold::after{
+  content:'SOLD';position:absolute;font-size:0.55em;
+  bottom:2px;font-weight:800;letter-spacing:0.5px;
+}
+.booth-btn.pending{
+  background:#fef3e8 !important;color:var(--amber) !important;
+  border-color:var(--amber);cursor:not-allowed;opacity:0.75;
+}
+.booth-btn.pending::after{
+  content:'HOLD';position:absolute;font-size:0.55em;
+  bottom:2px;font-weight:800;letter-spacing:0.5px;
+}
+.booth-btn.selected{
+  background:var(--amber) !important;color:#fff !important;
+  border-color:var(--amber-light);border-width:2px;
+  z-index:99;box-shadow:0 0 0 3px rgba(212,98,10,0.25);
+}
+
+/* ZOOM CONTROLS */
+.zoom-controls{position:absolute;bottom:16px;right:16px;z-index:100;display:flex;flex-direction:column;gap:6px;}
+.zoom-btn{width:36px;height:36px;background:var(--white);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-weight:700;color:var(--ink2);transition:all 0.15s;box-shadow:0 2px 8px rgba(0,0,0,0.06);}
+.zoom-btn:hover{background:var(--bg2);border-color:var(--border2);}
+.zoom-level{position:absolute;bottom:16px;left:16px;background:rgba(254,252,250,0.92);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-family:var(--mono);font-size:10px;color:var(--ink3);}
+
+/* LEGEND */
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:16px 20px;border-top:1px solid var(--border);}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink2);}
+.legend-dot{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,0.15);flex-shrink:0;}
+
+/* SIDE PANEL */
+.side-panel{display:flex;flex-direction:column;gap:16px;position:sticky;top:80px;}
+
+/* SELECTED CARD */
+.selected-card{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.selected-empty{padding:32px 20px;text-align:center;color:var(--ink3);}
+.selected-empty-icon{font-size:28px;margin-bottom:10px;opacity:0.3;font-family:var(--mono);}
+.selected-empty-text{font-size:12px;line-height:1.6;}
+.selected-content{display:none;padding:20px;}
+.selected-content.show{display:block;}
+.selected-badge{display:inline-flex;padding:3px 10px;border-radius:100px;font-size:9px;font-weight:700;font-family:var(--mono);letter-spacing:1px;margin-bottom:12px;}
+.selected-ref{font-family:var(--mono);font-size:11px;color:var(--ink3);margin-bottom:6px;}
+.selected-name{font-family:var(--serif);font-size:22px;font-style:italic;margin-bottom:4px;}
+.selected-type{font-size:11px;color:var(--ink3);margin-bottom:16px;}
+.selected-price{font-family:var(--serif);font-size:38px;font-style:italic;color:var(--amber);margin-bottom:4px;}
+.selected-price-sub{font-size:10px;color:var(--ink3);font-family:var(--mono);margin-bottom:16px;}
+.selected-note{display:none;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;line-height:1.5;color:var(--ink2);}
+.selected-note.show{display:block;}
+.selected-divider{height:1px;background:var(--border);margin:14px 0;}
+.selected-detail{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;}
+.selected-detail-label{color:var(--ink3);}
+.selected-detail-val{font-weight:600;color:var(--ink);}
+.btn-book{width:100%;background:var(--amber);color:white;border:none;padding:13px;border-radius:100px;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;}
+.btn-book:hover{background:var(--amber-light);transform:translateY(-1px);box-shadow:0 6px 20px rgba(212,98,10,0.25);}
+.btn-book:disabled{background:var(--border);color:var(--ink3);cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-contact{width:100%;background:transparent;color:var(--ink2);border:1px solid var(--border);padding:11px;border-radius:100px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;margin-top:8px;}
+.btn-contact:hover{border-color:var(--border2);color:var(--ink);background:var(--bg2);}
+.paypal-fallback{display:none;margin-top:12px;background:var(--ink);border:1px solid var(--ink);color:white;text-decoration:none;padding:13px;border-radius:100px;font-family:var(--sans);font-size:13px;font-weight:700;text-align:center;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 24px rgba(26,25,22,0.16);transition:all 0.2s;}
+.paypal-fallback.show{display:flex;}
+.paypal-fallback:hover{background:#2d2c29;transform:translateY(-1px);}
+.paypal-hint{display:none;margin-top:8px;font-size:11px;line-height:1.5;color:var(--ink3);text-align:center;}
+.paypal-hint.show{display:block;}
+
+/* PRICING TABLE */
+.pricing-card{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.pricing-head{padding:16px 18px;border-bottom:1px solid var(--border);}
+.pricing-head-title{font-size:13px;font-weight:700;}
+.pricing-row{display:flex;justify-content:space-between;align-items:center;padding:11px 18px;border-bottom:1px solid var(--border);font-size:12px;}
+.pricing-row:last-child{border-bottom:none;}
+.pricing-label{color:var(--ink2);display:flex;align-items:center;gap:8px;}
+.pricing-dot{width:10px;height:10px;border-radius:2px;border:1px solid rgba(0,0,0,0.1);flex-shrink:0;}
+.pricing-val{font-weight:700;color:var(--ink);font-family:var(--mono);}
+.pricing-val.amber{color:var(--amber);}
+
+/* EVENT INFO */
+.info-card{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:18px;}
+.info-title{font-size:12px;font-weight:700;margin-bottom:12px;}
+.info-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;font-size:12px;color:var(--ink2);}
+.info-row:last-child{margin-bottom:0;}
+.info-row svg{flex-shrink:0;margin-top:1px;opacity:0.5;}
+.info-row-val{color:var(--ink);font-weight:600;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,25,22,0.55);backdrop-filter:blur(8px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border:1px solid var(--border);border-radius:20px;width:100%;max-width:440px;box-shadow:0 32px 80px rgba(0,0,0,0.15);animation:modalIn 0.28s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes modalIn{from{opacity:0;transform:scale(0.92) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-head{padding:22px 24px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-title{font-family:var(--serif);font-size:24px;font-style:italic;}
+.modal-x{background:none;border:1px solid var(--border);color:var(--ink2);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;transition:all 0.15s;}
+.modal-x:hover{background:var(--bg2);}
+.modal-body{padding:22px 24px;}
+.modal-foot{padding:14px 24px 22px;border-top:1px solid var(--border);display:flex;gap:10px;}
+.modal-summary{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:10px;padding:14px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+.ms-name{font-size:14px;font-weight:700;}
+.ms-sub{font-size:11px;color:var(--ink3);margin-top:2px;}
+.ms-price{font-family:var(--serif);font-size:34px;color:var(--amber);font-style:italic;}
+.modal-package-note{display:none;background:var(--green-bg);border:1px solid rgba(26,107,60,0.2);border-radius:10px;padding:10px 12px;margin:-4px 0 16px;font-size:12px;line-height:1.5;color:var(--ink2);}
+.modal-package-note.show{display:block;}
+.form-group{margin-bottom:13px;}
+.form-label{display:block;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;}
+.form-input,.form-select{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:var(--sans);font-size:13px;color:var(--ink);outline:none;transition:border-color 0.2s;}
+.form-input:focus,.form-select:focus{border-color:var(--amber);background:var(--white);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-primary{flex:2;background:var(--amber);color:white;border:none;padding:12px;border-radius:100px;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-primary:hover{background:var(--amber-light);}
+.btn-ghost{flex:1;background:transparent;border:1px solid var(--border);color:var(--ink2);padding:12px;border-radius:100px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.btn-ghost:hover{border-color:var(--border2);color:var(--ink);}
+
+/* CONTACT MODAL */
+.contact-info{background:var(--bg2);border-radius:10px;padding:16px;}
+.contact-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--border);}
+.contact-row:last-child{border-bottom:none;}
+.contact-label{color:var(--ink3);}
+.contact-val{font-weight:600;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);border-radius:100px;padding:10px 22px;font-size:12px;font-weight:600;color:white;z-index:3000;opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);display:flex;align-items:center;gap:8px;pointer-events:none;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,0.18);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* STATUS BANNER */
+.sold-banner{background:var(--red-bg);border:1px solid rgba(192,57,43,0.2);border-radius:8px;padding:8px 14px;font-size:11px;color:var(--red);font-weight:600;text-align:center;margin-bottom:10px;display:none;}
+.sold-banner.show{display:block;}
+.sold-banner.pending{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber);}
+
+@media(max-width:768px){
+  .main{grid-template-columns:1fr;padding:16px;}
+  .side-panel{position:static;}
+  .hero{padding:32px 20px;}
+  .hero-meta{gap:16px;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="logo"><div class="logo-mark" style="background:var(--green);">T</div>TCICS</a>
+  <div class="nav-divider"></div>
+  <a href="index.html" class="nav-back">← Events</a>
+  <div class="nav-right">
+    <div class="nav-spots good" id="navSpots">Loading...</div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">TCICS · Coquitlam, BC</div>
+    <div class="hero-title">Tiregan 2026</div>
+    <div class="hero-sub">VENDOR BOOTH BOOKING — JULY 11, 2026</div>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span class="hero-meta-val">July 11, 2026</span>
+      </div>
+      <div class="hero-meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="hero-meta-val">10:00 AM – 10:00 PM</span>
+      </div>
+      <div class="hero-meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span class="hero-meta-val">Lafarge Lake Park, Coquitlam</span>
+      </div>
+      <div class="hero-meta-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span class="hero-meta-val">30,000+ Expected Attendees</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- MAP -->
+  <div>
+    <div class="map-card">
+      <div class="map-card-head">
+        <div class="map-card-title">Select Your Booth</div>
+        <div class="map-card-hint">Scroll to zoom · Drag to pan · Click to select</div>
+      </div>
+      <div class="map-container" id="mapContainer">
+        <div class="map-wrapper" id="mapWrapper">
+          <img src="https://image2url.com/r2/default/images/1772232052982-9762ec3e-f714-4c4c-97e6-34483237440a.png"
+               alt="Tiregan 2026 Floor Plan" class="map-img" id="mapImg" draggable="false">
+          <div class="booths-overlay" id="boothsOverlay"></div>
+        </div>
+        <div class="zoom-controls">
+          <button class="zoom-btn" onclick="zoomIn()">+</button>
+          <button class="zoom-btn" onclick="zoomReset()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="zoom-btn" onclick="zoomOut()">−</button>
+        </div>
+        <div class="zoom-level"><span id="zoomLevel">100</span>%</div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:rgb(255,255,255)"></div>Regular Booths (1–56) — $690</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgb(234,207,54)"></div>Handicraft Tables (A1–A11) — $290</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgb(112,146,190)"></div>Elite VIP (E1, E2) — $1,500</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgb(221,91,68)"></div>Food / Kebab / Truck — see pricing</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div class="side-panel">
+
+    <!-- SELECTED BOOTH -->
+    <div class="selected-card">
+      <div class="selected-empty" id="selectedEmpty">
+        <div class="selected-empty-icon">⬡</div>
+        <div class="selected-empty-text">Click any booth on the map to see details and pricing.</div>
+      </div>
+      <div class="selected-content" id="selectedContent">
+        <div class="sold-banner" id="soldBanner">This booth has been sold</div>
+        <div class="selected-badge" id="selectedBadge"></div>
+        <div class="selected-ref" id="selectedRef"></div>
+        <div class="selected-name" id="selectedName"></div>
+        <div class="selected-type" id="selectedType"></div>
+        <div class="selected-price" id="selectedPrice"></div>
+        <div class="selected-price-sub" id="selectedPriceSub">CAD · includes 1 table, 2 chairs</div>
+        <div class="selected-note" id="selectedPackageNote"></div>
+        <div class="selected-divider"></div>
+        <div class="selected-detail">
+          <span class="selected-detail-label">Event</span>
+          <span class="selected-detail-val">Tiregan 2026</span>
+        </div>
+        <div class="selected-detail">
+          <span class="selected-detail-label">Date</span>
+          <span class="selected-detail-val">July 11, 2026 (Saturday)</span>
+        </div>
+        <div class="selected-detail">
+          <span class="selected-detail-label">Hours</span>
+          <span class="selected-detail-val">10AM – 10PM</span>
+        </div>
+        <div class="selected-detail">
+          <span class="selected-detail-label">Size</span>
+          <span class="selected-detail-val" id="selectedSize">—</span>
+        </div>
+        <button class="btn-book" id="btnBook" onclick="openBookingModal()">Reserve this booth →</button>
+        <button class="btn-contact" id="btnContact" onclick="openContactModal()" style="display:none">Contact for pricing →</button>
+      </div>
+    </div>
+
+    <!-- PRICING TABLE -->
+    <div class="pricing-card">
+      <div class="pricing-head"><div class="pricing-head-title">Booth Pricing</div></div>
+      <div class="pricing-row">
+        <div class="pricing-label"><div class="pricing-dot" style="background:rgb(255,255,255)"></div>Regular (1–56)</div>
+        <div class="pricing-val amber">$690</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-label"><div class="pricing-dot" style="background:var(--amber)"></div>Booths 31 + 32 package</div>
+        <div class="pricing-val amber">$750</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-label"><div class="pricing-dot" style="background:rgb(112,146,190)"></div>Elite VIP (E1, E2)</div>
+        <div class="pricing-val amber">$1,500</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-label"><div class="pricing-dot" style="background:rgb(234,207,54)"></div>Handicraft (A1–A11)</div>
+        <div class="pricing-val amber">$290</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-label"><div class="pricing-dot" style="background:rgb(221,91,68)"></div>Kebab (FK1, FK2)</div>
+        <div class="pricing-val amber">$2,500</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-label"><div class="pricing-dot" style="background:rgb(221,91,68)"></div>Food Truck (FT1, FT2)</div>
+        <div class="pricing-val amber">$1,500</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-label"><div class="pricing-dot" style="background:rgb(221,91,68)"></div>Food Booths (except F3)</div>
+        <div class="pricing-val amber">$1,000</div>
+      </div>
+      <div class="pricing-row">
+        <div class="pricing-label"><div class="pricing-dot" style="background:var(--amber)"></div>Discounted Food Booth F3</div>
+        <div class="pricing-val amber">$700</div>
+      </div>
+    </div>
+
+    <!-- EVENT INFO -->
+    <div class="info-card">
+      <div class="info-title">Event Details</div>
+      <div class="info-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <div><div style="color:var(--ink3);font-size:11px;">Date</div><div class="info-row-val">Saturday, July 11, 2026</div></div>
+      </div>
+      <div class="info-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div><div style="color:var(--ink3);font-size:11px;">Hours</div><div class="info-row-val">10:00 AM – 10:00 PM</div></div>
+      </div>
+      <div class="info-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <div><div style="color:var(--ink3);font-size:11px;">Venue</div><div class="info-row-val">Lafarge Lake Park, Coquitlam</div></div>
+      </div>
+      <div class="info-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/></svg>
+        <div><div style="color:var(--ink3);font-size:11px;">Organizer</div><div class="info-row-val">TCICS · +1 (604) 849-6580</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Reserve Booth</div>
+      <button class="modal-x" onclick="closeModal('bookingModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-summary">
+        <div>
+          <div class="ms-name" id="mbName">—</div>
+          <div class="ms-sub" id="mbType">Tiregan 2026 · July 11</div>
+        </div>
+        <div class="ms-price" id="mbPrice">—</div>
+      </div>
+      <div class="modal-package-note" id="mbPackageNote"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input class="form-input" id="fFirstName" placeholder="Darius">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input class="form-input" id="fLastName" placeholder="Tehrani">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Business Name</label>
+        <input class="form-input" id="fBizName" placeholder="Your business">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="fEmail" type="email" placeholder="you@business.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input class="form-input" id="fPhone" type="tel" placeholder="+1 604 000 0000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Business Type</label>
+        <select class="form-select" id="fBizType">
+          <option value="">Select...</option>
+          <option>Food & Beverage</option>
+          <option>Retail</option>
+          <option>Arts & Crafts</option>
+          <option>Services</option>
+          <option>Nonprofit</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal('bookingModal')">Cancel</button>
+      <button class="btn-primary" id="btnProceed" onclick="proceedToPayment()">Continue to Payment →</button>
+    </div>
+    <div style="padding:0 24px 22px;">
+      <a class="paypal-fallback" id="paypalFallback" href="#" rel="noopener">Tap here to open PayPal →</a>
+      <div class="paypal-hint" id="paypalHint">If your browser does not open PayPal automatically, use this secure checkout link.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACT MODAL -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Contact TCICS</div>
+      <button class="modal-x" onclick="closeModal('contactModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--ink3);margin-bottom:16px;line-height:1.7;">Food booths, kebab stations, and food trucks are booked directly with TCICS. Contact us for pricing and availability.</p>
+      <div class="contact-info">
+        <div class="contact-row"><span class="contact-label">Phone</span><span class="contact-val">+1 (604) 849-6580</span></div>
+        <div class="contact-row"><span class="contact-label">Email</span><span class="contact-val">sponsor@tcics.com</span></div>
+        <div class="contact-row"><span class="contact-label">Booth</span><span class="contact-val" id="contactBoothRef">—</span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeModal('contactModal')" style="flex:1">Close</button>
+      <a href="mailto:sponsor@tcics.com" class="btn-primary" style="flex:2;text-decoration:none;text-align:center;line-height:1;">Email TCICS →</a>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL  = 'https://your-project-ref.supabase.co';
+const SUPABASE_ANON = 'YOUR_SUPABASE_PUBLISHABLE_KEY';
+// NOTE: Supabase anon key is intentionally public for static sites.
+// Security is enforced server-side via Row Level Security (RLS) policies in Supabase.
+// Ensure RLS is enabled and policies are tight on tiregan_booths table.
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const EVENT_NAME = 'Tiregan 2026';
+
+// ── OWASP: INPUT VALIDATION SCHEMA ──────────────────────────────
+// Defines allowed fields, max lengths, and patterns for all user input.
+// Reject anything outside these bounds before writing to Supabase.
+const VALIDATION = {
+  firstName:    { maxLen: 50,   pattern: /^[a-zA-ZÀ-ÿ\s'\-]+$/,          label: 'First name' },
+  lastName:     { maxLen: 50,   pattern: /^[a-zA-ZÀ-ÿ\s'\-]+$/,          label: 'Last name' },
+  bizName:      { maxLen: 100,  pattern: /^[\w\s\-&'.,()]+$/,             label: 'Business name' },
+  email:        { maxLen: 254,  pattern: /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, label: 'Email' },
+  phone:        { maxLen: 30,   pattern: /^[\d\s\+\-\(\)\.]+$/,           label: 'Phone' },
+  bizType:      { maxLen: 50,   allowed: ['Food & Beverage','Retail','Arts & Crafts','Services','Nonprofit','Other',''] },
+};
+
+// ── OWASP: SANITIZE STRING (prevent XSS) ────────────────────────
+// Strips HTML tags and encodes dangerous characters before any
+// user input is written to the DOM or sent to Supabase.
+function sanitize(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .trim();
+}
+
+// Raw value (for Supabase writes — Supabase handles parameterization)
+function sanitizeRaw(str) {
+  if (typeof str !== 'string') return '';
+  return str.replace(/<[^>]*>/g, '').trim(); // strip HTML tags only
+}
+
+// ── OWASP: VALIDATE BOOKING FORM ────────────────────────────────
+// Returns { valid: bool, error: string }
+function validateBookingForm(fields) {
+  const { firstName, lastName, bizName, email, phone, bizType } = fields;
+
+  // Required fields
+  if (!firstName) return { valid: false, error: 'First name is required' };
+  if (!bizName)   return { valid: false, error: 'Business name is required' };
+  if (!email)     return { valid: false, error: 'Email is required' };
+
+  // Length checks
+  if (firstName.length > VALIDATION.firstName.maxLen) return { valid: false, error: 'First name is too long' };
+  if (lastName.length  > VALIDATION.lastName.maxLen)  return { valid: false, error: 'Last name is too long' };
+  if (bizName.length   > VALIDATION.bizName.maxLen)   return { valid: false, error: 'Business name is too long' };
+  if (email.length     > VALIDATION.email.maxLen)     return { valid: false, error: 'Email is too long' };
+  if (phone.length     > VALIDATION.phone.maxLen)     return { valid: false, error: 'Phone number is too long' };
+
+  // Pattern checks
+  if (firstName && !VALIDATION.firstName.pattern.test(firstName)) return { valid: false, error: 'First name contains invalid characters' };
+  if (lastName  && !VALIDATION.lastName.pattern.test(lastName))   return { valid: false, error: 'Last name contains invalid characters' };
+  if (!VALIDATION.email.pattern.test(email))                       return { valid: false, error: 'Please enter a valid email address' };
+  if (phone && !VALIDATION.phone.pattern.test(phone))              return { valid: false, error: 'Phone number contains invalid characters' };
+
+  // Allowlist check for business type
+  if (!VALIDATION.bizType.allowed.includes(bizType)) return { valid: false, error: 'Invalid business type selected' };
+
+  return { valid: true, error: null };
+}
+
+// ── CLIENT-SIDE RATE LIMITING ────────────────────────────────────
+// Prevents spam submissions. Max 3 booking attempts per 3-minute window.
+// Uses localStorage to persist across page refreshes.
+// NOTE: This is a UX-layer protection. Real rate limiting must be
+// enforced server-side (Supabase RLS + edge functions if needed).
+const RATE_LIMIT = { maxAttempts: 3, windowMs: 3 * 60 * 1000 }; // 3 per 3 min
+
+function checkRateLimit() {
+  const now  = Date.now();
+  const data = JSON.parse(localStorage.getItem('vm_rl') || '{"attempts":[],"blocked":false}');
+
+  // Remove attempts outside the window
+  data.attempts = data.attempts.filter(t => now - t < RATE_LIMIT.windowMs);
+
+  if (data.attempts.length >= RATE_LIMIT.maxAttempts) {
+    const oldest   = data.attempts[0];
+    const resetIn  = Math.ceil((RATE_LIMIT.windowMs - (now - oldest)) / 60000);
+    return { allowed: false, message: `Too many booking attempts. Please try again in ${resetIn} minute${resetIn > 1 ? 's' : ''}.` };
+  }
+
+  data.attempts.push(now);
+  localStorage.setItem('vm_rl', JSON.stringify(data));
+  return { allowed: true };
+}
+
+// ── BOOTH DATA (Fire Area removed) ──
+const BOOTHS = [
+  { id:'TEST1', x:4.0, y:4.0, w:6.5, h:2.6, rotation:0, color:'rgb(26,107,60)', type:'TEST', zIndex:30 },
+  { id:'FK1',  x:27.61, y:23.5,  w:5.92, h:2.92, rotation:-13.53, color:'rgb(221,91,68)',   type:'FK' },
+  { id:'FK2',  x:24.73, y:14.3,  w:5.85, h:2.75, rotation:-10.79, color:'rgb(221,91,68)',   type:'FK' },
+  { id:'FT1',  x:58.7,  y:16.84, w:5.0,  h:2.98, rotation:-19.24, color:'rgb(221,91,68)',   type:'FT' },
+  { id:'FT2',  x:56.1,  y:7.91,  w:4.98, h:2.94, rotation:-18.3,  color:'rgb(221,91,68)',   type:'FT' },
+  { id:'F1',   x:33.29, y:22.91, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F2',   x:36.42, y:22.25, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F3',   x:39.56, y:21.58, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F4',   x:42.7,  y:20.92, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F5',   x:45.84, y:20.25, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F6',   x:48.97, y:19.59, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F7',   x:52.11, y:18.92, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F8',   x:55.25, y:18.26, w:3.36, h:2.51, rotation:-15.88, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F9',   x:52.63, y:9.27,  w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F10',  x:49.48, y:9.9,   w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F11',  x:46.33, y:10.52, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F12',  x:43.17, y:11.15, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F13',  x:40.02, y:11.78, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F14',  x:36.87, y:12.4,  w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F15',  x:33.72, y:13.03, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'F16',  x:30.57, y:13.66, w:3.33, h:2.48, rotation:-14.94, color:'rgb(221,91,68)',   type:'F'  },
+  { id:'A1',   x:12.51, y:37.09, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A2',   x:14.15, y:36.86, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A3',   x:15.79, y:36.63, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A4',   x:17.44, y:36.4,  w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A5',   x:19.08, y:36.16, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A6',   x:20.72, y:35.93, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A7',   x:13.83, y:38.74, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A8',   x:15.47, y:38.51, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A9',   x:17.11, y:38.28, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A10',  x:18.76, y:38.04, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'A11',  x:20.4,  y:37.81, w:1.56, h:0.65, rotation:-10.72, color:'rgb(234,207,54)',  type:'A'  },
+  { id:'E1',   x:15.0,  y:32.83, w:1.6,  h:3.93, rotation:-10.72, color:'rgb(112,146,190)', type:'E', zIndex:10 },
+  { id:'E2',   x:17.06, y:32.49, w:1.6,  h:3.93, rotation:-10.72, color:'rgb(112,146,190)', type:'E', zIndex:11 },
+  { id:'1',    x:67.75, y:47.39, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'2',    x:65.94, y:49.18, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'3',    x:64.13, y:50.97, w:3.44, h:2.55, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'4',    x:62.34, y:52.77, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'5',    x:60.53, y:54.56, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'6',    x:58.73, y:56.35, w:3.44, h:2.55, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'7',    x:56.93, y:58.15, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'8',    x:55.13, y:59.94, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'9',    x:53.36, y:61.76, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'10',   x:51.58, y:63.56, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'11',   x:62.7,  y:44.49, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'12',   x:60.89, y:46.29, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'13',   x:59.09, y:48.08, w:3.44, h:2.55, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'14',   x:57.29, y:49.88, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'15',   x:55.49, y:51.67, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'16',   x:53.68, y:53.46, w:3.44, h:2.55, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'17',   x:51.89, y:55.26, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'18',   x:50.08, y:57.05, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'19',   x:48.31, y:58.87, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'20',   x:46.53, y:60.67, w:3.44, h:2.54, rotation:36.69,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'21',   x:42.54, y:62.01, w:3.05, h:2.28, rotation:17.02,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'22',   x:39.91, y:61.41, w:3.05, h:2.28, rotation:17.02,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'23',   x:37.28, y:60.81, w:3.05, h:2.28, rotation:17.02,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'24',   x:34.65, y:60.21, w:3.05, h:2.28, rotation:17.02,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'25',   x:32.02, y:59.61, w:3.05, h:2.28, rotation:17.02,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'26',   x:29.39, y:59.02, w:3.05, h:2.28, rotation:17.02,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'27',   x:26.77, y:58.42, w:3.05, h:2.28, rotation:17.02,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'28',   x:25.14, y:54.67, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'29',   x:25.14, y:52.23, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'30',   x:25.14, y:48.48, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'31',   x:25.14, y:45.84, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'32',   x:25.14, y:42.49, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'33',   x:25.14, y:39.86, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'34',   x:25.14, y:35.4,  w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'35',   x:25.14, y:32.96, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'36',   x:18.76, y:32.15, w:2.86, h:2.13, rotation:-10.72, color:'rgb(255,255,255)', type:'R'  },
+  { id:'37',   x:19.21, y:33.94, w:2.86, h:2.13, rotation:-10.72, color:'rgb(255,255,255)', type:'R'  },
+  { id:'38',   x:19.7,  y:39.35, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'39',   x:19.7,  y:41.28, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'40',   x:19.71, y:43.21, w:2.45, h:1.83, rotation:0,      color:'rgb(255,255,255)', type:'R'  },
+  { id:'41',   x:18.71, y:45.23, w:2.76, h:2.06, rotation:-7.87,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'42',   x:19.12, y:47.19, w:2.76, h:2.06, rotation:-7.87,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'43',   x:19.52, y:49.14, w:2.76, h:2.06, rotation:-7.87,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'44',   x:19.93, y:51.1,  w:2.76, h:2.06, rotation:-7.87,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'45',   x:19.16, y:53.35, w:2.69, h:2.01, rotation:-5.96,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'46',   x:11.55, y:33.17, w:2.86, h:2.13, rotation:-10.72, color:'rgb(255,255,255)', type:'R'  },
+  { id:'47',   x:12.0,  y:34.96, w:2.86, h:2.13, rotation:-10.72, color:'rgb(255,255,255)', type:'R'  },
+  { id:'48',   x:13.59, y:39.76, w:2.97, h:2.22, rotation:-14.29, color:'rgb(255,255,255)', type:'R'  },
+  { id:'49',   x:14.27, y:41.58, w:2.97, h:2.22, rotation:-14.29, color:'rgb(255,255,255)', type:'R'  },
+  { id:'50',   x:14.95, y:43.41, w:2.97, h:2.22, rotation:-14.29, color:'rgb(255,255,255)', type:'R'  },
+  { id:'51',   x:16.17, y:45.52, w:2.76, h:2.06, rotation:-7.87,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'52',   x:16.58, y:47.47, w:2.76, h:2.06, rotation:-7.87,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'53',   x:16.98, y:49.43, w:2.76, h:2.06, rotation:-7.87,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'54',   x:17.38, y:51.38, w:2.76, h:2.06, rotation:-7.87,  color:'rgb(255,255,255)', type:'R'  },
+  { id:'55',   x:5.98,  y:34.09, w:3.0,  h:2.31, rotation:-17.51, color:'rgb(255,255,255)', type:'R'  },
+  { id:'56',   x:13.86, y:55.9,  w:2.97, h:2.28, rotation:-16.41, color:'rgb(255,255,255)', type:'R'  },
+];
+
+const PRICING = {
+  TEST: { name:'Payment Test Booth', price:1,    priceStr:'$1',     size:'Payment test',   contact:false },
+  R:  { name:'Regular Booth',    price:690,  priceStr:'$690',   size:'3m × 3m',       contact:false },
+  E:  { name:'Elite VIP Booth',  price:1500, priceStr:'$1,500', size:'6m × 3m',       contact:false },
+  A:  { name:'Handicraft Table', price:290,  priceStr:'$290',   size:'180cm × 75cm',  contact:false },
+  FK: { name:'Kebab Booth',      price:2500, priceStr:'$2,500', size:'Varies',        contact:false },
+  FT: { name:'Food Truck',       price:1500, priceStr:'$1,500', size:'Varies',        contact:false },
+  F:  { name:'Food Booth',       price:1000, priceStr:'$1,000', size:'Varies',        contact:false },
+};
+
+const SPECIAL_PRICING = {
+  '34': { name:'Discounted Regular Booth', price:600, priceStr:'$600', size:'3m × 3m', contact:false },
+  '31': { name:'Discounted Regular Booth Package', price:750, priceStr:'$750', size:'Two 3m × 3m booths', contact:false, packageLabel:'Booths 31 + 32', packageIds:['31','32'], note:'Booths 31 and 32 are sold together as one discount package. One checkout reserves both booths for $750 CAD.' },
+  '32': { name:'Discounted Regular Booth Package', price:750, priceStr:'$750', size:'Two 3m × 3m booths', contact:false, packageLabel:'Booths 31 + 32', packageIds:['31','32'], note:'Booths 31 and 32 are sold together as one discount package. One checkout reserves both booths for $750 CAD.' },
+  'F3': { name:'Discounted Food Booth', price:700, priceStr:'$700', size:'Varies', contact:false },
+};
+
+function pricingForBooth(booth) {
+  return SPECIAL_PRICING[booth?.id] || PRICING[booth?.type] || PRICING.R;
+}
+
+// ── STATE ──
+let soldBooths = new Set();
+let pendingBooths = new Set();
+let selectedBooth = null;
+let currentZoom = 1, currentX = 0, currentY = 0;
+let isDragging = false, startX, startY;
+
+// ── SUPABASE ──
+async function loadSoldBooths() {
+  try {
+    let { data, error } = await sb.from('tiregan_booths').select('booth_id,status,expires_at').in('status', ['sold', 'pending', 'paypal_pending']);
+    if (error) {
+      const fallback = await sb.from('tiregan_booths').select('booth_id,status,expires_at').in('status', ['sold', 'pending']);
+      data = fallback.data;
+    }
+    const now = Date.now();
+    const activeRows = (data || []).filter(r => {
+      if (r.status !== 'pending') return true;
+      return r.expires_at && new Date(r.expires_at).getTime() > now;
+    });
+    soldBooths = new Set(activeRows.filter(r => r.status === 'sold' || r.status === 'paypal_pending').map(r => r.booth_id));
+    pendingBooths = new Set(activeRows.filter(r => r.status === 'pending').map(r => r.booth_id));
+  } catch(e) { console.warn('tiregan_booths table not set up yet'); }
+  renderBooths();
+  updateNavSpots();
+}
+
+function subscribeToChanges() {
+  sb.channel('tiregan-realtime')
+    .on('postgres_changes', { event:'*', schema:'public', table:'tiregan_booths' }, () => {
+      loadSoldBooths();
+    })
+    .subscribe();
+}
+
+function updateNavSpots() {
+  const total     = BOOTHS.filter(b => b.type === 'R').length;
+  const unavailable = new Set([...soldBooths, ...pendingBooths]);
+  const available = total - [...unavailable].filter(id => BOOTHS.find(b => b.id === id && b.type === 'R')).length;
+  const el = document.getElementById('navSpots');
+  el.textContent = `${available} of ${total} booths left`;
+  el.className   = `nav-spots ${available <= 10 ? 'low' : 'good'}`;
+}
+
+// ── RENDER BOOTHS ──
+function renderBooths() {
+  const overlay = document.getElementById('boothsOverlay');
+  overlay.innerHTML = '';
+
+  BOOTHS.forEach(booth => {
+    const btn = document.createElement('button');
+    btn.className = 'booth-btn';
+    btn.dataset.id = booth.id;
+    btn.style.cssText = `left:${booth.x}%;top:${booth.y}%;width:${booth.w}%;height:${booth.h}%;background:${booth.color};color:#111;`;
+    if (booth.rotation) btn.style.transform = `rotate(${booth.rotation}deg)`;
+    if (booth.zIndex)   btn.style.zIndex    = booth.zIndex;
+
+    // Font size
+    if (booth.type === 'A') btn.style.fontSize = 'clamp(4px,0.45vw,7px)';
+    else if (['F','FK','FT','E','TEST'].includes(booth.type)) btn.style.fontSize = 'clamp(6px,0.65vw,10px)';
+    else btn.style.fontSize = 'clamp(6px,0.85vw,11px)';
+
+    btn.textContent = booth.id;
+
+    const isSold = soldBooths.has(booth.id);
+    const isPending = pendingBooths.has(booth.id);
+    if (isSold || isPending) {
+      btn.classList.add(isSold ? 'sold' : 'pending');
+      btn.disabled = true;
+    } else {
+      btn.onclick = (e) => { e.stopPropagation(); selectBooth(booth); };
+    }
+
+    overlay.appendChild(btn);
+  });
+}
+
+// ── SELECT BOOTH ──
+function selectBooth(booth) {
+  document.querySelectorAll('.booth-btn').forEach(b => b.classList.remove('selected'));
+  selectedBooth = booth;
+
+  const pricing    = pricingForBooth(booth);
+  (pricing.packageIds || [booth.id]).forEach(id => {
+    document.querySelector(`[data-id="${id}"]`)?.classList.add('selected');
+  });
+  const isSold     = soldBooths.has(booth.id);
+  const isPending  = pendingBooths.has(booth.id);
+  const isContact  = pricing.contact;
+
+  document.getElementById('selectedEmpty').style.display   = 'none';
+  document.getElementById('selectedContent').classList.add('show');
+  const statusBanner = document.getElementById('soldBanner');
+  statusBanner.classList.toggle('show', isSold || isPending);
+  statusBanner.classList.toggle('pending', isPending);
+  statusBanner.textContent = isPending ? 'This booth is currently being checked out' : 'This booth has been sold';
+
+  // Badge
+  const badge = document.getElementById('selectedBadge');
+  const badgeMap = { R:'bgr', E:'bb', A:'by', FK:'br', FT:'br', F:'br' };
+  const badgeColors = { TEST:'background:var(--green-bg);color:var(--green)', R:'background:var(--bg2);color:var(--ink3)', E:'background:var(--blue-bg);color:var(--blue)', A:'background:#fef9c3;color:#854d0e', FK:'background:var(--red-bg);color:var(--red)', FT:'background:var(--red-bg);color:var(--red)', F:'background:var(--red-bg);color:var(--red)' };
+  badge.style.cssText = badgeColors[booth.type] || badgeColors.R;
+  badge.textContent   = pricing.name;
+
+  document.getElementById('selectedRef').textContent   = pricing.packageLabel || `Booth ${booth.id}`;
+  document.getElementById('selectedName').textContent  = `Tiregan 2026`;
+  document.getElementById('selectedType').textContent  = `July 11, 2026 · Lafarge Lake, Coquitlam`;
+  document.getElementById('selectedPrice').textContent = pricing.priceStr;
+  document.getElementById('selectedSize').textContent  = pricing.size;
+  document.getElementById('selectedPriceSub').textContent = pricing.packageIds
+    ? 'CAD · combined package price · one checkout reserves both'
+    : 'CAD · includes 1 table, 2 chairs';
+  const packageNote = document.getElementById('selectedPackageNote');
+  packageNote.textContent = pricing.note || '';
+  packageNote.classList.toggle('show', Boolean(pricing.note));
+
+  const btnBook    = document.getElementById('btnBook');
+  const btnContact = document.getElementById('btnContact');
+
+  if (isSold || isPending) {
+    btnBook.style.display    = 'none';
+    btnContact.style.display = 'none';
+  } else if (isContact) {
+    btnBook.style.display    = 'none';
+    btnContact.style.display = 'block';
+  } else {
+    btnBook.style.display    = 'flex';
+    btnContact.style.display = 'none';
+    btnBook.disabled         = false;
+    btnBook.textContent      = pricing.packageLabel ? `Reserve ${pricing.packageLabel} →` : `Reserve Booth ${booth.id} →`;
+  }
+}
+
+// ── BOOKING MODAL ──
+function openBookingModal() {
+  if (!selectedBooth) return;
+  const pricing = pricingForBooth(selectedBooth);
+  document.getElementById('mbName').textContent  = `${pricing.packageLabel || `Booth ${selectedBooth.id}`} — ${pricing.name}`;
+  document.getElementById('mbType').textContent = pricing.packageIds ? 'Tiregan 2026 · one payment reserves both booths' : 'Tiregan 2026 · July 11';
+  document.getElementById('mbPrice').textContent = pricing.priceStr;
+  const modalNote = document.getElementById('mbPackageNote');
+  modalNote.textContent = pricing.note || '';
+  modalNote.classList.toggle('show', Boolean(pricing.note));
+  document.getElementById('paypalFallback').classList.remove('show');
+  document.getElementById('paypalHint').classList.remove('show');
+  document.getElementById('bookingModal').classList.add('open');
+}
+
+function openContactModal() {
+  document.getElementById('contactBoothRef').textContent = selectedBooth ? `Booth ${selectedBooth.id}` : '—';
+  document.getElementById('contactModal').classList.add('open');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function proceedToPayment() {
+  // ── RATE LIMIT CHECK ──
+  const rate = checkRateLimit();
+  if (!rate.allowed) { showToast('×', rate.message); return; }
+
+  // ── COLLECT & SANITIZE INPUTS ──
+  const firstName = sanitizeRaw(document.getElementById('fFirstName').value);
+  const lastName  = sanitizeRaw(document.getElementById('fLastName').value);
+  const bizName   = sanitizeRaw(document.getElementById('fBizName').value);
+  const email     = sanitizeRaw(document.getElementById('fEmail').value);
+  const phone     = sanitizeRaw(document.getElementById('fPhone').value);
+  const bizType   = sanitizeRaw(document.getElementById('fBizType').value);
+
+  // ── VALIDATE ──
+  const v = validateBookingForm({ firstName, lastName, bizName, email, phone, bizType });
+  if (!v.valid) { showToast('×', v.error); return; }
+
+  // ── VERIFY BOOTH IS STILL AVAILABLE ──
+  if (!selectedBooth || soldBooths.has(selectedBooth.id)) {
+    showToast('×', 'This booth is no longer available'); return;
+  }
+
+  if (!PRICING[selectedBooth.type]) {
+    showToast('×', 'Invalid booth type'); return;
+  }
+
+  const contactName = `${firstName} ${lastName}`.trim();
+  const btnProceed  = document.getElementById('btnProceed');
+
+  // ── SAVE TO LOCALSTORAGE (sanitized values only) ──
+  localStorage.setItem('tiregan_pending', JSON.stringify({
+    booth_id:      selectedBooth.id,
+    contact_name:  contactName,
+    contact_email: email,
+    business_name: bizName,
+    business_type: bizType,
+    phone,
+  }));
+
+  btnProceed.disabled = true;
+  btnProceed.textContent = 'Opening PayPal...';
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/create-paypal-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain;charset=UTF-8',
+      },
+      body: JSON.stringify({
+        booth_id: selectedBooth.id,
+        first_name: firstName,
+        last_name: lastName,
+        business_name: bizName,
+        contact_email: email,
+        phone,
+        business_type: bizType,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.approve_url) throw new Error(data.error || 'Could not start PayPal checkout');
+
+    localStorage.setItem('tiregan_pending', JSON.stringify({
+      booth_id: selectedBooth.id,
+      booth_label: data.booth_label || selectedBooth.id,
+      reservation_id: data.reservation_id,
+      paypal_order_id: data.order_id,
+      contact_name: contactName,
+      contact_email: email,
+      business_name: bizName,
+      business_type: bizType,
+      phone,
+    }));
+
+    const fallback = document.getElementById('paypalFallback');
+    const hint = document.getElementById('paypalHint');
+    fallback.href = data.approve_url;
+    fallback.classList.add('show');
+    hint.classList.add('show');
+
+    showToast('✓', `Redirecting to PayPal for Booth ${selectedBooth.id}...`);
+    setTimeout(() => { window.location.href = data.approve_url; }, 150);
+  } catch (e) {
+    console.warn(e);
+    showToast('×', e.message || 'Unable to open PayPal. Please try again.');
+    btnProceed.disabled = false;
+    btnProceed.textContent = 'Continue to Payment →';
+  }
+}
+
+// ── ZOOM / PAN ──
+function zoomIn()    { applyZoom(currentZoom + 0.3); }
+function zoomOut()   { applyZoom(currentZoom - 0.3); }
+function zoomReset() { currentZoom=1; currentX=0; currentY=0; updateTransform(); }
+
+function applyZoom(newZoom, pivotX, pivotY) {
+  const container = document.getElementById('mapContainer');
+  pivotX = pivotX ?? container.offsetWidth  / 2;
+  pivotY = pivotY ?? container.offsetHeight / 2;
+  const oldZoom = currentZoom;
+  currentZoom   = Math.max(1, Math.min(4, newZoom));
+  const scale   = currentZoom / oldZoom;
+  currentX      = pivotX - (pivotX - currentX) * scale;
+  currentY      = pivotY - (pivotY - currentY) * scale;
+  updateTransform();
+}
+
+function updateTransform() {
+  const wrapper   = document.getElementById('mapWrapper');
+  const container = document.getElementById('mapContainer');
+  const minX = Math.min(0, container.offsetWidth  - wrapper.offsetWidth  * currentZoom);
+  const minY = Math.min(0, container.offsetHeight - wrapper.offsetHeight * currentZoom);
+  currentX = Math.max(minX, Math.min(0, currentX));
+  currentY = Math.max(minY, Math.min(0, currentY));
+  wrapper.style.transform = `translate(${currentX}px,${currentY}px) scale(${currentZoom})`;
+  document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100);
+}
+
+const mapContainer = document.getElementById('mapContainer');
+mapContainer.addEventListener('mousedown', e => {
+  if (e.target.classList.contains('booth-btn')) return;
+  isDragging = true;
+  startX = e.clientX - currentX;
+  startY = e.clientY - currentY;
+  mapContainer.style.cursor = 'grabbing';
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  currentX = e.clientX - startX;
+  currentY = e.clientY - startY;
+  updateTransform();
+});
+document.addEventListener('mouseup', () => { isDragging = false; mapContainer.style.cursor = 'grab'; });
+mapContainer.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = mapContainer.getBoundingClientRect();
+  applyZoom(currentZoom + (e.deltaY < 0 ? 0.1 : -0.1), e.clientX - rect.left, e.clientY - rect.top);
+}, { passive:false });
+
+// Touch
+let touchDist = 0;
+mapContainer.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    touchDist = Math.hypot(dx, dy);
+  } else if (e.touches.length === 1) {
+    isDragging = true;
+    startX = e.touches[0].clientX - currentX;
+    startY = e.touches[0].clientY - currentY;
+  }
+});
+mapContainer.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 2 && touchDist > 0) {
+    const dx   = e.touches[0].clientX - e.touches[1].clientX;
+    const dy   = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.hypot(dx, dy);
+    const rect = mapContainer.getBoundingClientRect();
+    const cx   = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+    const cy   = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+    applyZoom(currentZoom * (dist / touchDist), cx, cy);
+    touchDist = dist;
+  } else if (isDragging && e.touches.length === 1) {
+    currentX = e.touches[0].clientX - startX;
+    currentY = e.touches[0].clientY - startY;
+    updateTransform();
+  }
+}, { passive:false });
+mapContainer.addEventListener('touchend', () => { isDragging = false; touchDist = 0; });
+
+// ── TOAST ──
+function showToast(icon, msg) {
+  const t = document.getElementById('toast');
+  t.textContent = '';
+  const span = document.createElement('span');
+  span.textContent = icon;
+  t.append(span, ` ${msg}`);
+  t.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  loadSoldBooths();
+  subscribeToChanges();
+  updateTransform();
+});
+window.addEventListener('resize', () => { renderBooths(); updateTransform(); });
+</script>
+<!-- ── CHATBOT WIDGET ── -->
+<div id="chatbot-container">
+  <div id="chat-nudge">Questions? Ask Tiregan Help</div>
+  <button id="chat-fab" onclick="toggleChat()" aria-label="Open chat">
+    <svg id="chat-icon-open" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <svg id="chat-icon-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:none"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div id="chat-window">
+    <div id="chat-header">
+      <div class="ch-left">
+        <div class="ch-avatar">T</div>
+        <div>
+          <div class="ch-title">Tiregan Help</div>
+          <div class="ch-sub"><span class="ch-dot"></span>Online · Replies instantly</div>
+        </div>
+      </div>
+      <div class="ch-lang">
+        <button onclick="setLang('en')" id="lang-en" class="ch-lang-btn active">EN</button>
+        <button onclick="setLang('fa')" id="lang-fa" class="ch-lang-btn">FA</button>
+      </div>
+    </div>
+    <div id="chat-messages"></div>
+    <div id="chat-suggestions"></div>
+    <div id="chat-input-row">
+      <input id="chat-input" type="text" placeholder="Ask a question..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button id="chat-send" onclick="sendChat()" aria-label="Send">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+#chatbot-container{position:fixed;bottom:24px;right:24px;z-index:1500;font-family:var(--sans);}
+#chat-nudge{position:absolute;right:68px;bottom:8px;background:var(--white);border:1px solid var(--amber-border);color:var(--ink);box-shadow:0 10px 28px rgba(0,0,0,0.14);border-radius:100px;padding:10px 14px;font-size:12px;font-weight:800;white-space:nowrap;animation:chatNudgeIn 0.35s ease both;}
+#chat-nudge::after{content:'';position:absolute;right:-6px;top:50%;width:10px;height:10px;background:var(--white);border-right:1px solid var(--amber-border);border-top:1px solid var(--amber-border);transform:translateY(-50%) rotate(45deg);}
+#chat-fab{position:relative;width:58px;height:58px;border-radius:50%;background:var(--amber);color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 28px rgba(212,98,10,0.34);transition:all 0.2s;}
+#chat-fab::after{content:'';position:absolute;inset:-7px;border:1px solid rgba(212,98,10,0.38);border-radius:50%;animation:chatRing 2.6s infinite;}
+#chat-fab:hover{background:var(--amber-light);transform:scale(1.05);}
+#chat-fab.open::after{display:none;}
+#chat-window{position:absolute;bottom:72px;right:0;width:380px;max-width:calc(100vw - 32px);height:540px;max-height:calc(100vh - 120px);background:var(--white);border:1px solid var(--border);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,0.18);display:none;flex-direction:column;overflow:hidden;}
+#chat-window.open{display:flex;animation:chatIn 0.25s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes chatIn{from{opacity:0;transform:translateY(12px) scale(0.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes chatRing{0%{opacity:0.75;transform:scale(0.82)}70%,100%{opacity:0;transform:scale(1.28)}}
+@keyframes chatNudgeIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+#chat-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--white);}
+.ch-left{display:flex;align-items:center;gap:10px;}
+.ch-avatar{width:34px;height:34px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:14px;}
+.ch-title{font-size:13px;font-weight:700;color:var(--ink);}
+.ch-sub{font-size:10px;color:var(--ink3);font-family:var(--mono);display:flex;align-items:center;gap:5px;margin-top:1px;}
+.ch-dot{width:6px;height:6px;background:#22c55e;border-radius:50%;display:inline-block;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.ch-lang{display:flex;background:var(--bg2);border-radius:7px;padding:2px;gap:1px;}
+.ch-lang-btn{background:transparent;border:none;font-size:10px;font-weight:700;padding:4px 9px;border-radius:5px;cursor:pointer;color:var(--ink3);font-family:var(--mono);transition:all 0.15s;}
+.ch-lang-btn.active{background:var(--ink);color:white;}
+#chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--bg);}
+.chat-msg{max-width:80%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.5;word-wrap:break-word;}
+.chat-msg.bot{background:var(--white);border:1px solid var(--border);color:var(--ink);border-bottom-left-radius:4px;align-self:flex-start;}
+.chat-msg.user{background:var(--ink);color:white;border-bottom-right-radius:4px;align-self:flex-end;}
+.chat-msg.bot .answer-title{display:block;font-weight:800;margin-bottom:6px;color:var(--ink);}
+.chat-msg.bot .answer-meta{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:7px;}
+.chat-msg.bot .answer-list{margin:8px 0 0;padding-left:16px;}
+.chat-msg.bot .answer-list li{margin-bottom:5px;}
+.chat-msg.bot .answer-note{display:block;margin-top:9px;padding-top:9px;border-top:1px solid var(--border);color:var(--ink2);font-size:12px;}
+.chat-msg.bot .answer-status{display:inline-flex;border-radius:100px;padding:3px 8px;font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:7px;}
+.chat-msg.bot .answer-status.available{background:var(--green-bg);color:var(--green);}
+.chat-msg.bot .answer-status.hold{background:var(--amber-bg);color:var(--amber);}
+.chat-msg.bot .answer-status.sold{background:var(--red-bg);color:var(--red);}
+.chat-msg.bot a{color:var(--amber);font-weight:600;text-decoration:none;}
+.chat-msg.bot a:hover{text-decoration:underline;}
+.chat-msg.bot.rtl{direction:rtl;text-align:right;border-bottom-left-radius:14px;border-bottom-right-radius:4px;}
+.chat-msg.user.rtl{direction:rtl;text-align:right;border-bottom-right-radius:14px;border-bottom-left-radius:4px;}
+.chat-typing{align-self:flex-start;background:var(--white);border:1px solid var(--border);padding:10px 14px;border-radius:14px;border-bottom-left-radius:4px;display:flex;gap:4px;}
+.chat-typing span{width:6px;height:6px;background:var(--ink3);border-radius:50%;animation:bounce 1.3s infinite;}
+.chat-typing span:nth-child(2){animation-delay:0.15s;}
+.chat-typing span:nth-child(3){animation-delay:0.3s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:0.4}30%{transform:translateY(-6px);opacity:1}}
+#chat-suggestions{padding:8px 12px;border-top:1px solid var(--border);background:var(--white);display:flex;gap:6px;overflow-x:auto;flex-wrap:nowrap;}
+#chat-suggestions::-webkit-scrollbar{display:none;}
+.chat-sugg{flex-shrink:0;background:var(--bg2);border:1px solid var(--border);color:var(--ink2);font-size:11px;padding:6px 11px;border-radius:100px;cursor:pointer;font-family:var(--sans);font-weight:600;white-space:nowrap;transition:all 0.15s;}
+.chat-sugg:hover{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber);}
+#chat-input-row{padding:10px 12px;border-top:1px solid var(--border);background:var(--white);display:flex;gap:8px;align-items:center;}
+#chat-input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:100px;padding:9px 14px;font-family:var(--sans);font-size:13px;outline:none;color:var(--ink);}
+#chat-input:focus{border-color:var(--amber);background:var(--white);}
+#chat-send{width:34px;height:34px;background:var(--amber);color:white;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;}
+#chat-send:hover{background:var(--amber-light);}
+@media(max-width:560px){#chat-nudge{right:64px;font-size:11px;padding:9px 12px;max-width:180px;white-space:normal;line-height:1.25;}}
+@media(max-width:480px){#chat-window{width:calc(100vw - 24px);height:calc(100vh - 100px);bottom:68px;right:-12px;}#chat-nudge{display:none;}}
+</style>
+
+<script>
+// ─── BILINGUAL KNOWLEDGE BASE ───────────────────────────────────────
+// Each intent has multiple keyword patterns (English + Farsi) and answers.
+const KB = [
+  {
+    keywords: {
+      en: ['price','cost','how much','fee','pricing','prices','rate','rates','expensive','cheap','dollar','cad','$'],
+      fa: ['قیمت','هزینه','چقدر','چند','قیمتها','نرخ','پول','تومان','دلار']
+    },
+    answer: {
+      en: 'Here are the booth prices for Tiregan 2026:<br><br>• <b>Regular Booth (1–56):</b> $690 CAD<br>• <b>Booths 31 + 32 package:</b> $750 CAD total<br>• <b>Booth 34:</b> $600 CAD<br>• <b>Elite VIP (E1, E2):</b> $1,500 CAD<br>• <b>Handicraft Table (A1–A11):</b> $290 CAD<br>• <b>Kebab Booth (FK1, FK2):</b> $2,500 CAD<br>• <b>Food Truck (FT1, FT2):</b> $1,500 CAD<br>• <b>Food Booths:</b> $1,000 CAD, except <b>F3 is $700 CAD</b><br><br>All prices include 1 table and 2 chairs.',
+      fa: 'قیمت غرفه‌های تیرگان ۲۰۲۶:<br><br>• <b>غرفه معمولی (۱ تا ۵۶):</b> ۶۹۰ دلار<br>• <b>پکیج غرفه‌های ۳۱ + ۳۲:</b> مجموعاً ۷۵۰ دلار<br>• <b>غرفه ۳۴:</b> ۶۰۰ دلار<br>• <b>غرفه ویژه VIP (E1, E2):</b> ۱۵۰۰ دلار<br>• <b>میز صنایع دستی (A1–A11):</b> ۲۹۰ دلار<br>• <b>غرفه کباب (FK1, FK2):</b> ۲۵۰۰ دلار<br>• <b>فود تراک (FT1, FT2):</b> ۱۵۰۰ دلار<br>• <b>غرفه غذا:</b> ۱۰۰۰ دلار، به‌جز <b>F3 که ۷۰۰ دلار است</b><br><br>قیمت‌ها شامل یک میز و دو صندلی است.'
+    }
+  },
+  {
+    keywords: {
+      en: ['date','when','day','what day','event date','july'],
+      fa: ['تاریخ','چه روزی','کی','کی است','روز','تیر','جولای']
+    },
+    answer: {
+      en: 'Tiregan 2026 takes place on <b>Saturday, July 11, 2026</b>, from <b>10:00 AM to 10:00 PM</b>.',
+      fa: 'جشن تیرگان ۲۰۲۶ در <b>شنبه ۱۱ جولای ۲۰۲۶</b>، از <b>ساعت ۱۰ صبح تا ۱۰ شب</b> برگزار می‌شود.'
+    }
+  },
+  {
+    keywords: {
+      en: ['where','location','venue','place','address','park','lafarge','coquitlam'],
+      fa: ['کجا','کجاست','مکان','محل','آدرس','پارک','لافارژ','کوکیتلام']
+    },
+    answer: {
+      en: 'The event is at <b>Lafarge Lake Park, Coquitlam, BC</b>. Easy access from the SkyTrain and ample parking nearby.',
+      fa: 'این جشن در <b>پارک لافارژ لیک، کوکیتلام، بریتیش کلمبیا</b> برگزار می‌شود. دسترسی آسان با اسکای‌ترین و پارکینگ کافی در نزدیکی.'
+    }
+  },
+  {
+    keywords: {
+      en: ['time','hours','open','close','start','end','what time','when does','duration'],
+      fa: ['ساعت','زمان','باز','بسته','شروع','پایان','کی شروع','کی تموم','مدت']
+    },
+    answer: {
+      en: 'Event hours: <b>10:00 AM – 10:00 PM</b> on Saturday, July 11, 2026. Vendor setup begins earlier in the morning — exact times will be shared once you book.',
+      fa: 'ساعت‌های برگزاری: <b>۱۰ صبح تا ۱۰ شب</b> در شنبه ۱۱ جولای ۲۰۲۶. زمان چیدمان غرفه‌داران زودتر در صبح است و ساعت دقیق پس از رزرو اطلاع داده می‌شود.'
+    }
+  },
+  {
+    keywords: {
+      en: ['attendees','people','crowd','visitors','traffic','audience','how many','expected'],
+      fa: ['بازدیدکننده','مردم','تعداد','جمعیت','حضار','چند نفر','چقدر شلوغ']
+    },
+    answer: {
+      en: 'We expect <b>30,000+ attendees</b> at Tiregan 2026. It is one of the largest Persian cultural events in Metro Vancouver.',
+      fa: 'انتظار می‌رود <b>بیش از ۳۰،۰۰۰ نفر</b> در تیرگان ۲۰۲۶ شرکت کنند. این یکی از بزرگ‌ترین رویدادهای فرهنگی ایرانی در مترو ونکوور است.'
+    }
+  },
+  {
+    keywords: {
+      en: ['how','book','reserve','sign up','register','process','steps','book a booth','how to book'],
+      fa: ['چطور','چگونه','رزرو','ثبت نام','مراحل','نحوه','رزرو غرفه']
+    },
+    answer: {
+      en: 'To book a booth:<br><br>1. Click any available booth on the map<br>2. Fill in your details (name, business, email, phone)<br>3. Continue to PayPal and pay securely<br>4. You will receive an automated receipt by email<br><br>The whole process takes about 2 minutes.',
+      fa: 'برای رزرو غرفه:<br><br>۱. روی هر غرفه آزاد روی نقشه کلیک کنید<br>۲. اطلاعات خود را وارد کنید (نام، کسب‌وکار، ایمیل، تلفن)<br>۳. به PayPal بروید و پرداخت کنید<br>۴. رسید پرداخت به ایمیل شما ارسال می‌شود<br><br>کل فرایند حدود ۲ دقیقه طول می‌کشد.'
+    }
+  },
+  {
+    keywords: {
+      en: ['pay','payment','paypal','credit card','visa','mastercard','money','method'],
+      fa: ['پرداخت','پی پل','کارت','ویزا','مسترکارت','پول','نحوه پرداخت']
+    },
+    answer: {
+      en: 'Payments are processed securely through <b>PayPal</b>. You can pay with PayPal, credit card, or debit card. No PayPal account required.',
+      fa: 'پرداخت‌ها از طریق <b>PayPal</b> به‌صورت امن انجام می‌شود. می‌توانید با PayPal، کارت اعتباری یا دبیت‌کارت پرداخت کنید. نیازی به حساب PayPal ندارید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['paypal not opening','paypal won’t open','paypal wont open','redirect','mobile payment','phone payment','tap here','open paypal','browser blocked','popup','blank page','stuck payment'],
+      fa: ['پی پل باز نمی‌شود','پی پل باز نمیشه','رفتن به پی پل','موبایل','گوشی','باز کردن پی پل','صفحه خالی','پرداخت گیر کرده']
+    },
+    answer: {
+      en: 'If PayPal does not open on your phone, tap the <b>“Open PayPal”</b> button shown on the payment step. If it still does not open, try Safari/Chrome directly, turn off popup blockers for the page, or copy the link into your browser. Your booth should only become sold/confirmed after PayPal reports a real payment status.',
+      fa: 'اگر PayPal روی گوشی باز نشد، روی دکمه <b>Open PayPal</b> در مرحله پرداخت بزنید. اگر باز هم باز نشد، با Safari/Chrome مستقیم امتحان کنید، popup blocker را برای صفحه خاموش کنید یا لینک را در مرورگر کپی کنید. غرفه فقط وقتی قطعی می‌شود که PayPal وضعیت واقعی پرداخت را گزارش کند.'
+    }
+  },
+  {
+    keywords: {
+      en: ['pending','payment pending','paypal pending','under review','echeck','bank transfer','clears','cleared','not completed yet'],
+      fa: ['در انتظار','پرداخت در انتظار','پندینگ','بررسی','تسویه','هنوز کامل نشده','کامل نشده']
+    },
+    answer: {
+      en: 'A <b>pending PayPal payment</b> means PayPal has started the payment but has not fully cleared it yet. The booth is kept unavailable while PayPal finishes processing. Once it clears, we mark it paid and email your official receipt. If PayPal declines or cancels it, the booth can become available again.',
+      fa: '<b>پرداخت در انتظار PayPal</b> یعنی PayPal پرداخت را شروع کرده ولی هنوز کامل تسویه نشده است. تا زمان نهایی شدن، غرفه برای دیگران در دسترس نیست. پس از تأیید، پرداخت ثبت می‌شود و رسید رسمی ایمیل می‌شود. اگر PayPal پرداخت را رد یا لغو کند، غرفه ممکن است دوباره آزاد شود.'
+    }
+  },
+  {
+    keywords: {
+      en: ['hold','on hold','reserved','temporary hold','why hold','booth hold','not paid','checkout started'],
+      fa: ['هولد','رزرو موقت','نگه داشته شده','چرا hold','پرداخت نشده','شروع پرداخت']
+    },
+    answer: {
+      en: '<b>Hold</b> means someone started checkout but PayPal has not confirmed a payment attempt yet. Holds are temporary and expire after about <b>10 minutes</b>. <b>Sold</b> means PayPal has reported a paid or pending payment, so the booth is no longer available.',
+      fa: '<b>Hold</b> یعنی کسی فرایند پرداخت را شروع کرده ولی PayPal هنوز تلاش پرداخت را تأیید نکرده است. Hold موقت است و حدود <b>۱۰ دقیقه</b> بعد منقضی می‌شود. <b>Sold</b> یعنی PayPal پرداخت کامل یا در انتظار را گزارش کرده و غرفه دیگر در دسترس نیست.'
+    }
+  },
+  {
+    keywords: {
+      en: ['sold','taken','booked','unavailable','grey booth','gray booth','not available'],
+      fa: ['فروخته شده','رزرو شده','گرفته شده','ناموجود','خاکستری','در دسترس نیست']
+    },
+    answer: {
+      en: 'A grey booth is not currently available. It may be fully paid, PayPal-pending, or temporarily held during checkout. If you believe a booth was taken by mistake, contact <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> with the booth number.',
+      fa: 'غرفه خاکستری در حال حاضر در دسترس نیست. ممکن است پرداخت شده، در انتظار تأیید PayPal یا موقتاً در مرحله پرداخت نگه داشته شده باشد. اگر فکر می‌کنید اشتباهی رخ داده، شماره غرفه را به <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> ارسال کنید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['receipt','invoice','confirmation','email confirmation','tax'],
+      fa: ['رسید','فاکتور','تأیید','ایمیل تأیید','مالیات']
+    },
+    answer: {
+      en: 'Yes — once your payment goes through, you will receive an <b>official PDF receipt</b> by email within 24 hours, including all booth and tax details for your records.',
+      fa: 'بله — پس از تأیید پرداخت، یک <b>رسید رسمی PDF</b> به ایمیل شما ارسال می‌شود، شامل تمام جزئیات غرفه و مالیات برای سوابق شما.'
+    }
+  },
+  {
+    keywords: {
+      en: ['no receipt','missing receipt','receipt not received','did not get email','wrong email','confirmation not received','spam','junk'],
+      fa: ['رسید نیامده','رسید نگرفتم','ایمیل نیامده','ایمیل اشتباه','اسپم','جانک','تأیید نیامده']
+    },
+    answer: {
+      en: 'If your payment is fully completed, the receipt is emailed automatically. Please check Spam/Junk first. If PayPal shows <b>Pending</b>, the official receipt is sent after PayPal clears the payment. For help, email <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> with your booth number and PayPal transaction ID.',
+      fa: 'اگر پرداخت شما کامل شده باشد، رسید به‌صورت خودکار ایمیل می‌شود. ابتدا Spam/Junk را بررسی کنید. اگر PayPal وضعیت <b>Pending</b> نشان می‌دهد، رسید رسمی پس از نهایی شدن پرداخت ارسال می‌شود. برای کمک، شماره غرفه و شناسه تراکنش PayPal را به <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> بفرستید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['cancel','refund','return','money back','cancellation'],
+      fa: ['کنسل','لغو','بازگشت پول','استرداد']
+    },
+    answer: {
+      en: 'Cancellations are handled on a case-by-case basis. Please email <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> or call <b>(604) 849-6580</b> as soon as possible.',
+      fa: 'لغو رزرو به‌صورت موردی بررسی می‌شود. لطفاً در اسرع وقت با ایمیل <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> یا تلفن <b>۸۴۹۶۵۸۰-۶۰۴</b> تماس بگیرید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['size','dimension','how big','space','square meter','meters','sqm'],
+      fa: ['اندازه','ابعاد','بزرگی','متراژ','چقدر بزرگ','چند متر']
+    },
+    answer: {
+      en: 'Booth sizes:<br><br>• <b>Regular:</b> 3m × 3m<br>• <b>Elite VIP:</b> 6m × 3m<br>• <b>Handicraft Table:</b> 180cm × 75cm<br>• <b>Food / Kebab / Truck:</b> Varies — contact us for exact dimensions',
+      fa: 'اندازه غرفه‌ها:<br><br>• <b>معمولی:</b> ۳ × ۳ متر<br>• <b>VIP:</b> ۶ × ۳ متر<br>• <b>میز صنایع دستی:</b> ۱۸۰ × ۷۵ سانتی‌متر<br>• <b>غذا / کباب / فود تراک:</b> متغیر — برای ابعاد دقیق تماس بگیرید'
+    }
+  },
+  {
+    keywords: {
+      en: ['which booth','best booth','recommend booth','choose booth','booth type','regular or vip','handicraft','craft vendor','food booth','food truck','kebab'],
+      fa: ['کدام غرفه','بهترین غرفه','پیشنهاد غرفه','انتخاب غرفه','نوع غرفه','معمولی یا vip','صنایع دستی','غرفه غذا','فود تراک','کباب']
+    },
+    answer: {
+      en: 'Quick guide:<br><br>• <b>Retail / services:</b> Regular booths are usually best<br>• <b>High visibility brands:</b> Elite VIP booths give more space and presence<br>• <b>Artists / handmade goods:</b> Handicraft tables are the budget-friendly option<br>• <b>Prepared food:</b> Food booths are for approved food vendors<br>• <b>Cooking / grill / truck setup:</b> Kebab or Food Truck zones are the right fit<br><br>If you are unsure, email your business type to <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> before booking.',
+      fa: 'راهنمای سریع:<br><br>• <b>فروش کالا یا خدمات:</b> غرفه معمولی معمولاً بهترین گزینه است<br>• <b>برندهای پرمخاطب:</b> غرفه VIP فضای بیشتر و دیده‌شدن بالاتری دارد<br>• <b>هنرمندان و صنایع دستی:</b> میز صنایع دستی گزینه اقتصادی‌تر است<br>• <b>فروش غذای آماده:</b> غرفه غذا برای فروشندگان تأییدشده غذاست<br>• <b>پخت‌وپز، گریل یا فودتراک:</b> بخش کباب یا فودتراک مناسب‌تر است<br><br>اگر مطمئن نیستید، نوع کسب‌وکار خود را قبل از رزرو به <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> ایمیل کنید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['table','chair','furniture','provided','include','what comes','equipment'],
+      fa: ['میز','صندلی','وسایل','شامل','تجهیزات','چه چیزی همراه']
+    },
+    answer: {
+      en: 'Each booth comes with <b>1 table and 2 chairs</b> included in the price. If you need additional furniture, please bring your own or contact us in advance.',
+      fa: 'هر غرفه شامل <b>۱ میز و ۲ صندلی</b> در قیمت است. اگر به وسایل بیشتری نیاز دارید، لطفاً خودتان بیاورید یا از قبل با ما تماس بگیرید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['tent','canopy','bring tent','cover','banner','signage','decorate','decoration','display'],
+      fa: ['چادر','سایبان','بنر','تابلو','دکور','تزئین','نمایش محصول']
+    },
+    answer: {
+      en: 'You may bring your own display items, signage, and approved booth materials as long as they fit inside your booth footprint and are safely secured. For tents/canopies or anything large, please confirm with TCICS before event day.',
+      fa: 'می‌توانید وسایل نمایش، تابلو و تجهیزات مجاز خود را بیاورید، به شرطی که داخل محدوده غرفه جا شود و ایمن نصب شود. برای چادر/سایبان یا وسایل بزرگ، لطفاً قبل از روز رویداد با TCICS هماهنگ کنید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['electricity','power','outlet','plug','wifi','internet'],
+      fa: ['برق','پریز','وای فای','اینترنت','وایفای']
+    },
+    answer: {
+      en: 'Limited electricity is available for an additional fee — typically prioritized for food and kebab booths. Wi-Fi is not provided; we recommend bringing your own hotspot. Email <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> to request power access.',
+      fa: 'برق محدود با هزینه اضافی موجود است — معمولاً اولویت با غرفه‌های غذا و کباب است. وای‌فای ارائه نمی‌شود؛ توصیه می‌کنیم هات‌اسپات شخصی همراه داشته باشید. برای درخواست برق به <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> ایمیل بزنید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['setup','load in','load-in','arrival','vendor arrival','check in','check-in','when arrive','tear down','pack up','cleanup','clean up'],
+      fa: ['چیدمان','ورود غرفه دار','ورود فروشنده','تحویل غرفه','چک این','جمع کردن','نظافت','تمیزکاری']
+    },
+    answer: {
+      en: 'Vendor setup/check-in details are sent after booking. Please arrive during the assigned vendor window, keep your booth area clean, and do not pack up before the event team confirms teardown timing. Bring your booking/receipt email for check-in.',
+      fa: 'جزئیات چیدمان و check-in پس از رزرو ارسال می‌شود. لطفاً در بازه زمانی تعیین‌شده برای غرفه‌داران حاضر شوید، فضای غرفه را تمیز نگه دارید و قبل از اعلام تیم رویداد غرفه را جمع نکنید. ایمیل رزرو/رسید را برای check-in همراه داشته باشید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['parking','park car','car park','where park'],
+      fa: ['پارکینگ','پارک ماشین','جای پارک']
+    },
+    answer: {
+      en: 'There is free parking at <b>Lafarge Lake Park</b> and surrounding streets in Coquitlam. Vendors can park near the loading area for setup — exact details will be shared after booking.',
+      fa: 'پارکینگ رایگان در <b>پارک لافارژ</b> و خیابان‌های اطراف کوکیتلام موجود است. غرفه‌داران می‌توانند نزدیک منطقه بارگیری برای چیدمان پارک کنند — جزئیات دقیق پس از رزرو ارسال می‌شود.'
+    }
+  },
+  {
+    keywords: {
+      en: ['skytrain','transit','train','bus','accessible','accessibility','wheelchair','public transit','how to get there'],
+      fa: ['اسکای ترین','قطار','اتوبوس','حمل و نقل عمومی','دسترسی','ویلچر','چطور بروم']
+    },
+    answer: {
+      en: 'Lafarge Lake Park is close to <b>Lafarge Lake-Douglas SkyTrain Station</b>, making it easy to reach by transit. The park area is generally accessible, but vendors with specific accessibility or loading needs should contact TCICS in advance.',
+      fa: 'پارک Lafarge Lake نزدیک ایستگاه <b>Lafarge Lake-Douglas SkyTrain</b> است و با حمل‌ونقل عمومی دسترسی آسان دارد. فضای پارک به‌طور کلی قابل دسترس است، اما غرفه‌دارانی که نیاز خاص برای دسترسی یا بارگیری دارند بهتر است از قبل با TCICS تماس بگیرند.'
+    }
+  },
+  {
+    keywords: {
+      en: ['contact','phone','call','email','reach','speak','talk to someone'],
+      fa: ['تماس','تلفن','زنگ','ایمیل','صحبت']
+    },
+    answer: {
+      en: '<b>Contact TCICS:</b><br>• Email: <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a><br>• Phone: <b>+1 (604) 849-6580</b><br>• Address: Unit 241-3020 Lincoln Ave., Coquitlam, BC',
+      fa: '<b>تماس با TCICS:</b><br>• ایمیل: <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a><br>• تلفن: <b>۸۴۹۶۵۸۰-۶۰۴</b><br>• آدرس: Unit 241-3020 Lincoln Ave., Coquitlam, BC'
+    }
+  },
+  {
+    keywords: {
+      en: ['human','agent','support','help desk','urgent','problem','issue','mistake','wrong booth','change booth','edit booking'],
+      fa: ['انسان','پشتیبانی','کمک فوری','مشکل','اشتباه','غرفه اشتباه','تغییر غرفه','ویرایش رزرو']
+    },
+    answer: {
+      en: 'For urgent booking changes or payment problems, contact TCICS directly:<br>• <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a><br>• <b>+1 (604) 849-6580</b><br><br>Please include your booth number, business name, email used at checkout, and PayPal transaction ID if you have one.',
+      fa: 'برای تغییر فوری رزرو یا مشکل پرداخت، مستقیم با TCICS تماس بگیرید:<br>• <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a><br>• <b>۸۴۹۶۵۸۰-۶۰۴</b><br><br>لطفاً شماره غرفه، نام کسب‌وکار، ایمیل استفاده‌شده در پرداخت و شناسه تراکنش PayPal را در صورت داشتن ارسال کنید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['food','restaurant','allowed','cook','sell food','permit','health'],
+      fa: ['غذا','رستوران','مجوز','پخت','فروش غذا','بهداشت']
+    },
+    answer: {
+      en: 'Food and beverage vendors must hold a valid <b>Vancouver Coastal Health permit</b>. Cooking on-site is allowed only in designated kebab and food truck zones (FK1, FK2, FT1, FT2). Email us to coordinate.',
+      fa: 'فروشندگان غذا و نوشیدنی باید دارای <b>مجوز معتبر Vancouver Coastal Health</b> باشند. پخت‌وپز در محل فقط در مناطق مشخص کباب و فود تراک (FK1, FK2, FT1, FT2) مجاز است. برای هماهنگی ایمیل بزنید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['insurance','business license','documents','paperwork','certificate','health certificate','vendor documents'],
+      fa: ['بیمه','مجوز کسب و کار','مدارک','گواهی','مجوز بهداشت','مدارک فروشنده']
+    },
+    answer: {
+      en: 'Some vendor types may need extra documents, especially food vendors. Food vendors should be ready to provide health permit details and any required insurance or license information requested by TCICS or the venue.',
+      fa: 'برخی نوع‌های غرفه ممکن است مدارک بیشتری نیاز داشته باشند، مخصوصاً فروشندگان غذا. فروشندگان غذا باید آماده ارائه مجوز بهداشت و هرگونه بیمه یا مجوز لازم طبق درخواست TCICS یا محل برگزاری باشند.'
+    }
+  },
+  {
+    keywords: {
+      en: ['alcohol','beer','wine','drink','liquor'],
+      fa: ['الکل','مشروب','شراب','آبجو','نوشیدنی الکلی']
+    },
+    answer: {
+      en: 'Alcohol sales are <b>not permitted</b> at booths. Tiregan 2026 is a family-friendly cultural event.',
+      fa: 'فروش الکل در غرفه‌ها <b>مجاز نیست</b>. تیرگان ۲۰۲۶ یک رویداد فرهنگی خانوادگی است.'
+    }
+  },
+  {
+    keywords: {
+      en: ['weather','rain','storm','wind','outside','outdoor','cancelled weather','bad weather'],
+      fa: ['هوا','باران','طوفان','باد','فضای باز','لغو به خاطر هوا','هوای بد']
+    },
+    answer: {
+      en: 'Tiregan 2026 is an outdoor event. Please plan for sun, rain, and wind, and secure your booth materials safely. Weather-related updates will be communicated by TCICS if needed.',
+      fa: 'تیرگان ۲۰۲۶ یک رویداد فضای باز است. لطفاً برای آفتاب، باران و باد آماده باشید و وسایل غرفه را ایمن نصب کنید. در صورت نیاز، اطلاعیه‌های مربوط به آب‌وهوا توسط TCICS اعلام می‌شود.'
+    }
+  },
+  {
+    keywords: {
+      en: ['sponsor','sponsorship','perform','performer','stage','music','volunteer','media','press'],
+      fa: ['اسپانسر','حامی','اجرا','هنرمند','استیج','موسیقی','داوطلب','رسانه','خبرنگار']
+    },
+    answer: {
+      en: 'For sponsorships, performers, volunteers, or media inquiries, please contact TCICS at <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a>. Include what you are interested in and the best phone number to reach you.',
+      fa: 'برای اسپانسری، اجرا، داوطلبی یا درخواست رسانه‌ای، لطفاً با <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> تماس بگیرید. موضوع درخواست و بهترین شماره تماس خود را ارسال کنید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['available','left','remaining','sold out','spots','spaces'],
+      fa: ['موجود','باقی','تمام','مانده','جا','فضا']
+    },
+    answer: {
+      en: 'You can see live booth availability on the map above. White booths are available, grey are taken. The map updates in real time as bookings come in.',
+      fa: 'موجودی لحظه‌ای غرفه‌ها روی نقشه بالا قابل مشاهده است. غرفه‌های سفید موجود و خاکستری رزرو شده‌اند. نقشه به‌صورت زنده با هر رزرو به‌روز می‌شود.'
+    }
+  },
+  {
+    keywords: {
+      en: ['tcics','organizer','who runs','organization','iranian society','cultural'],
+      fa: ['tcics','برگزارکننده','انجمن ایرانی','فرهنگی','کیست']
+    },
+    answer: {
+      en: '<b>TCICS (Tri-City Iranian Cultural Society)</b> is Metro Vancouver\'s largest Iranian cultural organization, dedicated to preserving and celebrating Persian heritage in Canada.',
+      fa: '<b>TCICS (انجمن فرهنگی ایرانیان سه‌شهر)</b> بزرگ‌ترین سازمان فرهنگی ایرانی در مترو ونکوور است که به حفظ و گرامیداشت میراث فارسی در کانادا اختصاص دارد.'
+    }
+  },
+  {
+    keywords: {
+      en: ['tiregan','what is tiregan','festival','jashn'],
+      fa: ['تیرگان','جشن','چیست']
+    },
+    answer: {
+      en: '<b>Tiregan</b> is an ancient Persian water festival celebrated in mid-summer, honouring Tishtrya, the deity of rain. It is one of the most joyful Iranian celebrations, featuring music, dance, food, and cultural performances.',
+      fa: '<b>تیرگان</b> جشن آب‌پاشان باستانی ایرانی است که در میانه تابستان برگزار می‌شود و گرامی‌داشت تیشتر، ایزد باران است. این یکی از شادترین جشن‌های ایرانی است که شامل موسیقی، رقص، غذا و اجراهای فرهنگی است.'
+    }
+  },
+  {
+    keywords: {
+      en: ['security','safe','secure','data','privacy','personal info'],
+      fa: ['امنیت','امن','محرمانه','حریم خصوصی','اطلاعات شخصی']
+    },
+    answer: {
+      en: 'Your data is protected. We use industry-standard encryption and never share your information with third parties. Payments go through PayPal — we never see your card details. See our <a href="privacy.html">Privacy Policy</a> for details.',
+      fa: 'اطلاعات شما محافظت می‌شود. ما از رمزنگاری استاندارد صنعتی استفاده می‌کنیم و هرگز اطلاعات شما را با اشخاص ثالث به اشتراک نمی‌گذاریم. پرداخت‌ها از طریق PayPal انجام می‌شود — ما هرگز جزئیات کارت شما را نمی‌بینیم. برای جزئیات به <a href="privacy.html">سیاست حریم خصوصی</a> مراجعه کنید.'
+    }
+  },
+  {
+    keywords: {
+      en: ['hello','hi','hey','salam','greetings','good morning','good evening'],
+      fa: ['سلام','درود','صبح بخیر','عصر بخیر','خسته نباشید']
+    },
+    answer: {
+      en: 'Hi. I can help with anything about Tiregan 2026 — pricing, booking, location, payment, booth availability, setup, and more. What would you like to know?',
+      fa: 'سلام. می‌تونم درباره تیرگان ۲۰۲۶ کمک کنم — قیمت، رزرو، مکان، پرداخت، موجودی غرفه، چیدمان و موارد دیگر. چه چیزی می‌خواهید بدونید؟'
+    }
+  },
+  {
+    keywords: {
+      en: ['thank','thanks','appreciate'],
+      fa: ['ممنون','مرسی','تشکر','سپاس']
+    },
+    answer: {
+      en: 'You\'re very welcome. If you have any other questions, feel free to ask. See you at Tiregan 2026.',
+      fa: 'خواهش می‌کنم. اگر سوال دیگری دارید، با کمال میل پاسخ می‌دهم. تیرگان ۲۰۲۶ منتظرتون هستیم.'
+    }
+  },
+  {
+    keywords: {
+      en: ['bye','goodbye','see you','farewell'],
+      fa: ['خداحافظ','بای','فعلا','بدرود']
+    },
+    answer: {
+      en: 'Goodbye. Reach out anytime at sponsor@tcics.com. See you at Tiregan 2026.',
+      fa: 'خداحافظ. هر زمان نیاز داشتید با sponsor@tcics.com تماس بگیرید. تیرگان ۲۰۲۶ منتظرتون هستیم.'
+    }
+  },
+];
+
+// Extra high-coverage intents. These are still client-side only: they do not
+// touch Supabase, PayPal, booking status, or any live payment flow.
+const ADVANCED_KB = [
+  {
+    topic: 'payment-integrity',
+    priority: 30,
+    keywords: {
+      en: ['charged but no booth','paid but booth not sold','paypal charged','money taken','payment integrity','double charged','charged twice','duplicate payment','paid twice','completed but pending','paid but pending'],
+      fa: ['پول کم شد','پول برداشت شد','دو بار پرداخت','دو بار کم شد','پرداخت کردم ولی غرفه','پرداخت کامل ولی پندینگ','پول رفت','مشکل پرداخت']
+    },
+    answer: {
+      en: '<span class="answer-title">Payment safety</span>If PayPal shows money was charged but the booth does not look confirmed, please do not pay again. Email <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> with your booth number, checkout email, business name, and PayPal transaction ID. TCICS can match the PayPal record to the booth reservation.<span class="answer-note">The website does not mark a booth paid just because someone clicks checkout. It waits for PayPal to report a real payment status.</span>',
+      fa: '<span class="answer-title">امنیت پرداخت</span>اگر PayPal نشان می‌دهد پول کم شده ولی غرفه قطعی به نظر نمی‌رسد، لطفاً دوباره پرداخت نکنید. شماره غرفه، ایمیل پرداخت، نام کسب‌وکار و شناسه تراکنش PayPal را به <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> بفرستید تا TCICS پرداخت را با رزرو تطبیق دهد.<span class="answer-note">سایت فقط با کلیک روی پرداخت، غرفه را پرداخت‌شده ثبت نمی‌کند؛ باید وضعیت واقعی از PayPal دریافت شود.</span>'
+    }
+  },
+  {
+    topic: 'email-change',
+    priority: 24,
+    keywords: {
+      en: ['wrong email','mistyped email','typo email','change email','different email','receipt to another email','update email','email typo'],
+      fa: ['ایمیل اشتباه','ایمیل غلط','تغییر ایمیل','ایمیل را عوض','رسید به ایمیل دیگر','اشتباه تایپ کردم']
+    },
+    answer: {
+      en: '<span class="answer-title">Wrong email on a booking</span>Email <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> with your booth number, business name, phone number, the wrong email entered, and the correct email. If you have a PayPal transaction ID, include it too. TCICS can verify and update the booking record.',
+      fa: '<span class="answer-title">ایمیل اشتباه در رزرو</span>شماره غرفه، نام کسب‌وکار، شماره تلفن، ایمیل اشتباه واردشده و ایمیل درست را به <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> بفرستید. اگر شناسه تراکنش PayPal دارید، آن را هم اضافه کنید. TCICS می‌تواند بررسی و اصلاح کند.'
+    }
+  },
+  {
+    topic: 'booth-transfer',
+    priority: 22,
+    keywords: {
+      en: ['transfer booth','change booth','switch booth','move booth','swap booth','upgrade booth','downgrade booth','change my spot','different booth'],
+      fa: ['تغییر غرفه','جابجایی غرفه','عوض کردن غرفه','انتقال غرفه','غرفه دیگر','ارتقا غرفه','تعویض جا']
+    },
+    answer: {
+      en: '<span class="answer-title">Changing booth after booking</span>Booth changes are handled manually so TCICS can protect paid reservations and avoid double-booking. Email <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> with your current booth, requested booth, business name, and payment email. If there is a price difference, TCICS will tell you the next step.',
+      fa: '<span class="answer-title">تغییر غرفه بعد از رزرو</span>تغییر غرفه به‌صورت دستی انجام می‌شود تا رزروهای پرداخت‌شده و جلوگیری از دوباره‌فروشی حفظ شود. شماره غرفه فعلی، غرفه موردنظر، نام کسب‌وکار و ایمیل پرداخت را به <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> بفرستید. اگر اختلاف قیمت وجود داشته باشد، TCICS مرحله بعد را اعلام می‌کند.'
+    }
+  },
+  {
+    topic: 'checkout-troubleshooting',
+    priority: 26,
+    keywords: {
+      en: ['checkout error','payment error','button not working','continue not working','can’t click','cant click','form error','invalid phone','invalid email','page frozen','try again','something went wrong'],
+      fa: ['خطای پرداخت','خطای رزرو','دکمه کار نمی‌کند','نمیتونم کلیک کنم','فرم خطا میده','صفحه گیر کرده','دوباره امتحان','مشکل فرم']
+    },
+    answer: {
+      en: '<span class="answer-title">Checkout troubleshooting</span><ol class="answer-list"><li>Refresh the page and select the booth again.</li><li>Use a standard email format like name@example.com.</li><li>Use a phone number with digits, spaces, plus, dashes, or brackets only.</li><li>Try Safari or Chrome directly if you are inside Instagram/Facebook/TikTok browser.</li><li>If PayPal opens but payment does not finish, do not retry repeatedly; contact TCICS with the booth number.</li></ol>',
+      fa: '<span class="answer-title">رفع مشکل رزرو</span><ol class="answer-list"><li>صفحه را refresh کنید و دوباره غرفه را انتخاب کنید.</li><li>ایمیل را با فرمت استاندارد وارد کنید، مثل name@example.com.</li><li>شماره تلفن فقط شامل عدد، فاصله، +، - یا پرانتز باشد.</li><li>اگر داخل مرورگر Instagram/Facebook/TikTok هستید، لینک را مستقیم با Safari یا Chrome باز کنید.</li><li>اگر PayPal باز شد ولی پرداخت کامل نشد، چندبار پشت‌سرهم پرداخت نکنید؛ با شماره غرفه به TCICS پیام بدهید.</li></ol>'
+    }
+  },
+  {
+    topic: 'vendor-fit',
+    priority: 18,
+    keywords: {
+      en: ['jewelry','clothing','beauty','cosmetic','skincare','art','painting','ceramic','candle','book','service business','real estate','insurance booth','nonprofit booth','what category'],
+      fa: ['جواهر','لباس','آرایش','پوست','هنر','نقاشی','سرامیک','شمع','کتاب','خدمات','املاک','بیمه','خیریه','چه دسته']
+    },
+    answer: {
+      en: '<span class="answer-title">Best booth type by vendor</span><ul class="answer-list"><li><b>Jewelry, clothing, beauty, books, gifts:</b> Regular booth.</li><li><b>Small handmade items or artists:</b> Handicraft table if you only need tabletop space.</li><li><b>Large brand presence or sponsor-style setup:</b> Elite VIP.</li><li><b>Food sales:</b> Food booth, kebab booth, or food truck zone depending on cooking setup and permits.</li><li><b>Services/nonprofits:</b> Regular booth is usually the cleanest fit.</li></ul>',
+      fa: '<span class="answer-title">بهترین نوع غرفه برای کسب‌وکار</span><ul class="answer-list"><li><b>جواهر، لباس، زیبایی، کتاب، هدیه:</b> غرفه معمولی.</li><li><b>محصولات دست‌ساز کوچک یا هنری:</b> میز صنایع دستی اگر فقط فضای روی میز لازم دارید.</li><li><b>برند بزرگ یا حضور اسپانسری:</b> غرفه VIP.</li><li><b>فروش غذا:</b> غرفه غذا، غرفه کباب یا فودتراک بسته به نوع پخت و مجوزها.</li><li><b>خدمات یا خیریه:</b> معمولاً غرفه معمولی بهترین گزینه است.</li></ul>'
+    }
+  },
+  {
+    topic: 'food-specific',
+    priority: 25,
+    keywords: {
+      en: ['sample food','food sample','prepackaged food','packaged food','drink sales','coffee','tea','ice cream','dessert','home cooked','homemade food','bbq','grill','deep fryer','propane','generator food'],
+      fa: ['نمونه غذا','غذای بسته بندی','نوشیدنی','قهوه','چای','بستنی','دسر','غذای خانگی','کباب پز','گریل','سرخ کن','پروپان','ژنراتور غذا']
+    },
+    answer: {
+      en: '<span class="answer-title">Food vendor guidance</span>Food vendors may need health approval, safe food handling, and venue coordination. Pre-packaged items are usually simpler than cooking on site. Open flame, grilling, propane, deep fryers, generators, or food trucks must be coordinated with TCICS before event day.<span class="answer-note">Email your menu, cooking method, power needs, and permit status to <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> before booking if you are unsure.</span>',
+      fa: '<span class="answer-title">راهنمای فروشندگان غذا</span>فروشندگان غذا ممکن است به تأییدیه بهداشت، رعایت ایمنی غذا و هماهنگی با محل رویداد نیاز داشته باشند. محصولات بسته‌بندی‌شده معمولاً ساده‌تر از پخت‌وپز در محل هستند. شعله باز، گریل، پروپان، سرخ‌کن، ژنراتور یا فودتراک باید قبل از روز رویداد با TCICS هماهنگ شود.<span class="answer-note">اگر مطمئن نیستید، منو، روش پخت، نیاز برق و وضعیت مجوز خود را به <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> ایمیل کنید.</span>'
+    }
+  },
+  {
+    topic: 'what-to-bring',
+    priority: 17,
+    keywords: {
+      en: ['what to bring','bring with me','vendor checklist','checklist','extension cord','cash box','pos','square','card reader','water bottle','weights','sandbags'],
+      fa: ['چی بیارم','چه چیزهایی بیاورم','چک لیست','سیم سیار','دستگاه کارت','کارتخوان','آب','وزنه','کیسه شن']
+    },
+    answer: {
+      en: '<span class="answer-title">Vendor packing checklist</span><ul class="answer-list"><li>Receipt/booking confirmation email for check-in.</li><li>Signage, table cover, product display, and price list.</li><li>Card reader/POS, charged phone, backup battery, and hotspot if needed.</li><li>Weather-safe setup: weights, clips, bags, and sun/rain protection.</li><li>Any permits, insurance, or food documents that apply to your booth type.</li></ul>',
+      fa: '<span class="answer-title">چک‌لیست غرفه‌دار</span><ul class="answer-list"><li>ایمیل رسید یا تأیید رزرو برای check-in.</li><li>تابلو، رومیزی، نمایش محصول و لیست قیمت.</li><li>کارتخوان/POS، موبایل شارژشده، پاوربانک و هات‌اسپات در صورت نیاز.</li><li>تجهیزات مناسب فضای باز: وزنه، گیره، کیسه و محافظ آفتاب/باران.</li><li>هرگونه مجوز، بیمه یا مدارک غذا مربوط به نوع غرفه.</li></ul>'
+    }
+  },
+  {
+    topic: 'sales-advice',
+    priority: 14,
+    keywords: {
+      en: ['how much inventory','inventory','how many products','sell well','make sales','vendor tips','booth tips','attract customers','best selling'],
+      fa: ['چقدر محصول','موجودی','فروش خوب','نکات فروش','جذب مشتری','بهترین فروش','چطور بفروشم']
+    },
+    answer: {
+      en: '<span class="answer-title">Vendor sales tips</span>Plan for a high-foot-traffic cultural festival. Clear signage, fast payment, visible pricing, easy samples/demos, and a clean table layout matter. Bring enough stock for a long day, but keep your display simple so visitors can understand what you sell within a few seconds.',
+      fa: '<span class="answer-title">نکات فروش برای غرفه‌داران</span>برای یک جشن فرهنگی پرتردد آماده باشید. تابلو واضح، پرداخت سریع، قیمت‌های قابل‌دید، نمونه/دموی ساده و چیدمان مرتب خیلی مهم است. موجودی کافی برای یک روز طولانی بیاورید، اما نمایش محصولات را ساده نگه دارید تا بازدیدکننده در چند ثانیه متوجه کار شما شود.'
+    }
+  },
+  {
+    topic: 'family-public',
+    priority: 12,
+    keywords: {
+      en: ['kids','family','children','pets','dog','washroom','bathroom','water station','first aid','lost and found','music schedule','program'],
+      fa: ['کودک','بچه','خانواده','حیوان','سگ','سرویس بهداشتی','دستشویی','آب','کمک های اولیه','گمشده','برنامه موسیقی','برنامه اجرا']
+    },
+    answer: {
+      en: '<span class="answer-title">Public event questions</span>Tiregan is family-friendly and outdoors at Lafarge Lake Park. Public amenities such as washrooms, park access, and event programming are managed by the event team and venue. For detailed program timing, accessibility, first aid, or lost-and-found questions, contact TCICS at <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a>.',
+      fa: '<span class="answer-title">سوالات عمومی رویداد</span>تیرگان یک جشن خانوادگی در فضای باز پارک Lafarge Lake است. امکانات عمومی مثل سرویس بهداشتی، دسترسی پارک و برنامه اجراها توسط تیم رویداد و محل برگزاری مدیریت می‌شود. برای زمان‌بندی دقیق برنامه، دسترسی، کمک‌های اولیه یا اشیای گمشده با <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> تماس بگیرید.'
+    }
+  },
+  {
+    topic: 'finglish',
+    priority: 16,
+    keywords: {
+      en: ['gheymat','ghimat','ghorfe','gorfe','pardakht','pardakhtam','resid','resit','komak','kojast','saat','sanaye dasti','dasti','mojavez','bime','taghir','laghv'],
+      fa: ['gheymat','ghimat','ghorfe','gorfe','pardakht','resid','komak','kojast','saat','mojavez','bime','taghir']
+    },
+    answer: {
+      en: '<span class="answer-title">I understand Finglish too</span>You can ask in English, فارسی, or Finglish. Useful examples: <b>gheymat ghorfe chand ast?</b>, <b>pardakht pending shode</b>, <b>resid nagereftam</b>, or <b>mojavez ghaza mikhad?</b>',
+      fa: '<span class="answer-title">فینگلیش هم متوجه می‌شوم</span>می‌توانید انگلیسی، فارسی یا Finglish بپرسید. مثال: <b>gheymat ghorfe chand ast?</b>، <b>pardakht pending shode</b>، <b>resid nagereftam</b> یا <b>mojavez ghaza mikhad?</b>'
+    }
+  }
+];
+
+KB.unshift(...ADVANCED_KB);
+
+// ─── SUGGESTED QUESTIONS PER LANGUAGE ────────────────────────────────
+const SUGGESTIONS = {
+  en: ['Is booth 12 available?', 'Which booth should I choose?', 'Payment safety', 'Food vendor rules', 'Vendor checklist', 'Wrong email'],
+  fa: ['غرفه ۱۲ موجود است؟', 'کدام غرفه بهتر است؟', 'امنیت پرداخت', 'قوانین فروش غذا', 'چک‌لیست غرفه‌دار', 'ایمیل اشتباه']
+};
+
+const FALLBACK = {
+  en: 'I may need a human for that exact question, but I can help with booth prices, specific booth availability, booth recommendations, PayPal status, receipts, wrong email, setup, food permits, power, parking, documents, refunds, and contact details. Try asking “is booth 18 available?” or “what should a food vendor bring?”<span class="answer-note">For urgent or personal booking questions, email <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> or call <b>(604) 849-6580</b>.</span>',
+  fa: 'برای آن سوال دقیق شاید نیاز به پاسخ انسانی باشد، اما من می‌توانم درباره قیمت، موجودی غرفه مشخص، پیشنهاد غرفه، وضعیت PayPal، رسید، ایمیل اشتباه، چیدمان، مجوز غذا، برق، پارکینگ، مدارک، استرداد وجه و تماس کمک کنم. مثلاً بپرسید «غرفه ۱۸ موجود است؟» یا «فروشنده غذا چه چیزهایی باید بیاورد؟»<span class="answer-note">برای سوال فوری یا مربوط به رزرو شخصی، با <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> یا <b>۸۴۹۶۵۸۰-۶۰۴</b> تماس بگیرید.</span>'
+};
+
+const GREETING = {
+  en: 'Hi there. I can help with Tiregan 2026 booth prices, exact booth availability, PayPal/payment status, receipts, food vendor rules, setup, parking, and what to bring. Ask naturally, or tap a suggestion below.',
+  fa: 'سلام. می‌توانم درباره قیمت غرفه‌های تیرگان ۲۰۲۶، موجودی غرفه مشخص، وضعیت PayPal/پرداخت، رسید، قوانین فروش غذا، چیدمان، پارکینگ و وسایل لازم کمک کنم. طبیعی بپرسید یا روی پیشنهادهای پایین بزنید.'
+};
+
+let currentLang = 'en';
+let chatOpened = false;
+
+// Persian/Arabic character detection
+function isPersian(text) {
+  return /[\u0600-\u06FF]/.test(text);
+}
+
+function escapeChatHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+function toLatinDigits(value) {
+  const persian = '۰۱۲۳۴۵۶۷۸۹';
+  const arabic = '٠١٢٣٤٥٦٧٨٩';
+  return String(value).replace(/[۰-۹٠-٩]/g, ch => {
+    const p = persian.indexOf(ch);
+    if (p >= 0) return String(p);
+    const a = arabic.indexOf(ch);
+    return a >= 0 ? String(a) : ch;
+  });
+}
+
+// Smart normalization — handles typos, accents, Farsi variants, and Persian digits
+function normalize(text) {
+  return toLatinDigits(text).toLowerCase()
+    .replace(/[\u064A]/g, '\u06CC')  // Arabic ya → Persian ya
+    .replace(/[\u0643]/g, '\u06A9')  // Arabic kaf → Persian kaf
+    .replace(/[?!.,;:؟،()[\]{}"']/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tokens(text) {
+  return normalize(text)
+    .split(' ')
+    .filter(word => word.length > 1 && !['the','and','for','with','how','what','can','you','are','will','that','this','your','about','please','لطفا','برای','چی','چیه','چند','هست','است','می','شود','میشه'].includes(word));
+}
+
+function editDistanceWithinOne(a, b) {
+  if (!a || !b || Math.abs(a.length - b.length) > 1) return false;
+  if (a === b) return true;
+  let i = 0, j = 0, diff = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) { i++; j++; continue; }
+    diff++;
+    if (diff > 1) return false;
+    if (a.length > b.length) i++;
+    else if (b.length > a.length) j++;
+    else { i++; j++; }
+  }
+  return diff + (a.length - i) + (b.length - j) <= 1;
+}
+
+function boothById(id) {
+  return BOOTHS.find(booth => booth.id.toUpperCase() === String(id || '').toUpperCase()) || null;
+}
+
+function detectBoothId(message) {
+  const clean = normalize(message).toUpperCase();
+  const prefixed = clean.match(/\b(TEST1|FK[12]|FT[12]|E[12]|A(?:[1-9]|1[01])|F(?:[1-9]|1[0-6]))\b/);
+  if (prefixed) return prefixed[1];
+
+  const contextual = clean.match(/(?:BOOTH|SPOT|SPACE|STALL|غرفه|غرفه شماره|شماره)\s*#?\s*(?:NO\.?\s*)?([1-9]|[1-4][0-9]|5[0-6])\b/);
+  if (contextual) return contextual[1];
+
+  const exact = clean.match(/^#?\s*([1-9]|[1-4][0-9]|5[0-6])\s*$/);
+  return exact ? exact[1] : null;
+}
+
+function boothStatus(booth) {
+  if (!booth) return 'missing';
+  if (soldBooths.has(booth.id)) return 'sold';
+  if (pendingBooths.has(booth.id)) return 'hold';
+  return 'available';
+}
+
+function statusLabel(status, lang) {
+  if (lang === 'fa') {
+    return status === 'available' ? 'موجود' : status === 'hold' ? 'در حال پرداخت / Hold' : status === 'sold' ? 'فروخته‌شده یا PayPal Pending' : 'نامشخص';
+  }
+  return status === 'available' ? 'Available' : status === 'hold' ? 'Hold / checkout in progress' : status === 'sold' ? 'Sold or PayPal pending' : 'Unknown';
+}
+
+function statusClass(status) {
+  return status === 'available' ? 'available' : status === 'hold' ? 'hold' : 'sold';
+}
+
+function boothTypeHelp(type, lang) {
+  const map = {
+    TEST: { en: 'Internal payment test booth.', fa: 'غرفه تست پرداخت داخلی.' },
+    R: { en: 'Best for retail, services, nonprofits, beauty, books, clothing, gifts, and general vendors.', fa: 'مناسب برای فروش کالا، خدمات، خیریه، زیبایی، کتاب، لباس، هدیه و بیشتر غرفه‌های عمومی.' },
+    E: { en: 'Best for brands that want more space and stronger visibility.', fa: 'مناسب برندهایی که فضای بیشتر و دیده‌شدن بالاتر می‌خواهند.' },
+    A: { en: 'Best for artists, handmade goods, jewelry, small crafts, and tabletop displays.', fa: 'مناسب هنرمندان، محصولات دست‌ساز، جواهرات، صنایع دستی کوچک و نمایش روی میز.' },
+    FK: { en: 'Kebab/cooking area. Confirm menu, permit, fire/power needs, and setup with TCICS.', fa: 'بخش کباب/پخت. منو، مجوز، نیاز آتش/برق و چیدمان را با TCICS هماهنگ کنید.' },
+    FT: { en: 'Food truck area. Confirm truck dimensions, arrival window, permit, and power needs with TCICS.', fa: 'بخش فودتراک. ابعاد خودرو، زمان ورود، مجوز و نیاز برق را با TCICS هماهنگ کنید.' },
+    F: { en: 'Food booth area for approved food vendors. Health permit/document requirements may apply.', fa: 'غرفه غذا برای فروشندگان تأییدشده. ممکن است مجوز بهداشت/مدارک لازم باشد.' }
+  };
+  return (map[type] || map.R)[lang];
+}
+
+function answerSpecificBooth(message, lang) {
+  const id = detectBoothId(message);
+  if (!id && !(selectedBooth && /(this booth|selected booth|current booth|این غرفه|غرفه انتخابی)/i.test(normalize(message)))) return null;
+
+  const booth = id ? boothById(id) : selectedBooth;
+  if (!booth) {
+    return lang === 'fa'
+      ? '<span class="answer-title">غرفه پیدا نشد</span>این شماره غرفه در نقشه Tiregan 2026 پیدا نشد. شماره‌های معمولی ۱ تا ۵۶ هستند؛ همچنین E1/E2، A1-A11، F1-F16، FK1/FK2 و FT1/FT2 وجود دارند.'
+      : '<span class="answer-title">Booth not found</span>I could not find that booth on the Tiregan 2026 map. Regular booths are 1-56, plus E1/E2, A1-A11, F1-F16, FK1/FK2, and FT1/FT2.';
+  }
+
+  const pricing = pricingForBooth(booth);
+  const status = boothStatus(booth);
+  const idHtml = escapeChatHtml(booth.id);
+  if (lang === 'fa') {
+    return `<span class="answer-status ${statusClass(status)}">${statusLabel(status, lang)}</span><span class="answer-title">غرفه ${idHtml} — ${pricing.name}</span><ul class="answer-list"><li><b>قیمت:</b> ${pricing.priceStr} CAD</li><li><b>اندازه:</b> ${pricing.size}</li><li><b>وضعیت:</b> ${statusLabel(status, lang)}</li><li><b>مناسب برای:</b> ${boothTypeHelp(booth.type, lang)}</li></ul>${status === 'available' ? '<span class="answer-note">برای رزرو، روی همین غرفه در نقشه بزنید و پرداخت را از طریق PayPal کامل کنید.</span>' : '<span class="answer-note">اگر فکر می‌کنید وضعیت این غرفه اشتباه است، شماره غرفه و اطلاعات پرداخت را به sponsor@tcics.com بفرستید.</span>'}`;
+  }
+  return `<span class="answer-status ${statusClass(status)}">${statusLabel(status, lang)}</span><span class="answer-title">Booth ${idHtml} — ${pricing.name}</span><ul class="answer-list"><li><b>Price:</b> ${pricing.priceStr} CAD</li><li><b>Size:</b> ${pricing.size}</li><li><b>Status:</b> ${statusLabel(status, lang)}</li><li><b>Best for:</b> ${boothTypeHelp(booth.type, lang)}</li></ul>${status === 'available' ? '<span class="answer-note">To book it, tap this booth on the map and complete PayPal checkout.</span>' : '<span class="answer-note">If you think the booth status is wrong, email sponsor@tcics.com with the booth number and payment details.</span>'}`;
+}
+
+function availabilitySummary(lang) {
+  const categories = ['R','E','A','F','FK','FT'];
+  const rows = categories.map(type => {
+    const all = BOOTHS.filter(booth => booth.type === type);
+    const available = all.filter(booth => boothStatus(booth) === 'available');
+    const pricing = PRICING[type];
+    return { type, label: pricing.name, price: pricing.priceStr, available: available.length, total: all.length };
+  }).filter(row => row.total);
+
+  if (lang === 'fa') {
+    return '<span class="answer-title">موجودی زنده غرفه‌ها</span><ul class="answer-list">' +
+      rows.map(row => `<li><b>${row.label}:</b> ${row.available} از ${row.total} موجود — ${row.price}</li>`).join('') +
+      '</ul><span class="answer-note">وضعیت نقشه به‌صورت زنده به‌روزرسانی می‌شود. Hold یعنی کسی در مرحله پرداخت است؛ Sold/PayPal Pending یعنی غرفه فعلاً قابل رزرو نیست.</span>';
+  }
+  return '<span class="answer-title">Live booth availability</span><ul class="answer-list">' +
+    rows.map(row => `<li><b>${row.label}:</b> ${row.available} of ${row.total} available — ${row.price}</li>`).join('') +
+    '</ul><span class="answer-note">The map updates live. Hold means someone is in checkout; Sold/PayPal Pending means the booth is not available right now.</span>';
+}
+
+function shouldShowAvailabilitySummary(message) {
+  const norm = normalize(message);
+  return /(how many|left|remaining|available|availability|sold out|spots|spaces|چند|موجود|باقی|مانده|تمام|جا|فضا)/.test(norm) && !detectBoothId(message);
+}
+
+function directAnswer(message, lang) {
+  const boothAnswer = answerSpecificBooth(message, lang);
+  if (boothAnswer) return boothAnswer;
+  if (shouldShowAvailabilitySummary(message)) return availabilitySummary(lang);
+  return null;
+}
+
+// Score how well a message matches each intent
+function findBestMatch(message) {
+  const norm = normalize(message);
+  const messageTokens = tokens(message);
+  let bestScore = 0;
+  let bestEntry = null;
+  let bestMatchStrength = 0;
+
+  for (const entry of KB) {
+    let score = entry.priority || 0;
+    let matchStrength = 0;
+    const allKeywords = [...entry.keywords.en, ...entry.keywords.fa];
+    for (const kw of allKeywords) {
+      const nkw = normalize(kw);
+      if (norm.includes(nkw)) {
+        // Longer keyword matches score higher (more specific)
+        score += nkw.length + 8;
+        matchStrength += nkw.length;
+      }
+      const keywordTokens = tokens(nkw);
+      if (keywordTokens.length && keywordTokens.every(token => messageTokens.includes(token))) {
+        score += keywordTokens.length * 4;
+        matchStrength += keywordTokens.length * 3;
+      }
+      for (const kt of keywordTokens) {
+        if (messageTokens.some(mt => editDistanceWithinOne(mt, kt))) {
+          score += 2;
+          matchStrength += 1;
+        }
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestEntry = entry;
+      bestMatchStrength = matchStrength;
+    }
+  }
+
+  // Require a real match beyond the entry priority.
+  return bestMatchStrength >= 3 ? bestEntry : null;
+}
+
+function toggleChat() {
+  const win = document.getElementById('chat-window');
+  const open = document.getElementById('chat-icon-open');
+  const close = document.getElementById('chat-icon-close');
+  const fab = document.getElementById('chat-fab');
+  const nudge = document.getElementById('chat-nudge');
+
+  win.classList.toggle('open');
+  const isOpen = win.classList.contains('open');
+  open.style.display = isOpen ? 'none' : 'block';
+  close.style.display = isOpen ? 'block' : 'none';
+  fab.classList.toggle('open', isOpen);
+  if (nudge) nudge.style.display = isOpen ? 'none' : '';
+
+  if (isOpen && !chatOpened) {
+    chatOpened = true;
+    addMessage(GREETING[currentLang], 'bot');
+    renderSuggestions();
+  }
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+  document.getElementById('lang-fa').classList.toggle('active', lang === 'fa');
+  document.getElementById('chat-input').placeholder = lang === 'fa' ? 'سوال خود را بپرسید...' : 'Ask a question...';
+  document.getElementById('chat-input').style.direction = lang === 'fa' ? 'rtl' : 'ltr';
+  document.getElementById('chat-input').style.textAlign = lang === 'fa' ? 'right' : 'left';
+  renderSuggestions();
+}
+
+function renderSuggestions() {
+  const c = document.getElementById('chat-suggestions');
+  c.textContent = '';
+  SUGGESTIONS[currentLang].forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'chat-sugg';
+    btn.type = 'button';
+    btn.dataset.q = s;
+    btn.textContent = s;
+    btn.addEventListener('click', () => askSugg(btn));
+    c.appendChild(btn);
+  });
+}
+
+function askSugg(btn) {
+  const q = btn.dataset.q;
+  document.getElementById('chat-input').value = q;
+  sendChat();
+}
+
+function addMessage(text, who) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `chat-msg ${who}`;
+  // RTL for Farsi
+  if (isPersian(text.replace(/<[^>]*>/g,''))) div.classList.add('rtl');
+  if (who === 'user') {
+    div.textContent = text;
+  } else {
+    div.innerHTML = text;
+  }
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-typing';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Add user message
+  addMessage(text, 'user');
+  input.value = '';
+
+  // Auto-detect language from user input
+  const detectedLang = isPersian(text) ? 'fa' : currentLang;
+  if (detectedLang !== currentLang) setLang(detectedLang);
+
+  // Show typing indicator
+  showTyping();
+
+  // Simulate thinking time (300-700ms feels natural)
+  setTimeout(() => {
+    hideTyping();
+    const precise = directAnswer(text, detectedLang);
+    if (precise) {
+      addMessage(precise, 'bot');
+      return;
+    }
+    const match = findBestMatch(text);
+    if (match) {
+      addMessage(match.answer[detectedLang], 'bot');
+    } else {
+      addMessage(FALLBACK[detectedLang], 'bot');
+    }
+  }, 400 + Math.random() * 300);
+}
+</script>
+
+<footer style="border-top:1px solid var(--border);padding:14px 28px;text-align:center;font-size:10px;color:var(--ink3);font-family:var(--mono);letter-spacing:0.5px;">
+  © 2026 Tri-City Iranian Cultural Society ·
+  <a href="privacy.html" style="color:var(--ink3);text-decoration:none;">Privacy Policy</a> ·
+  sponsor@tcics.com · +1 (604) 849-6580
+</footer>
+</body>
+</html>
