@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://www.image2url.com https://image2url.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://www.image2url.com https://image2url.com;">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>TCICS Events — Tri-City Iranian Cultural Society</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f2ed;--bg2:#edeae4;--white:#fefcfa;--ink:#1a1916;--ink2:#4a4843;--ink3:#9a9690;
+  --border:#d8d4cc;--border2:#c8c4bc;
+  --amber:#d4620a;--amber-light:#f07030;--amber-bg:#fdf0e8;--amber-border:#f0c8a8;
+  --green:#1a6b3c;--green-bg:#e8f5ee;--red:#c0392b;--red-bg:#fde8e8;
+  --serif:'Instrument Serif',serif;--sans:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);}
+
+nav{height:56px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:16px;position:sticky;top:0;z-index:200;}
+.logo{font-size:16px;font-weight:800;letter-spacing:-0.5px;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:8px;}
+.logo-mark{width:24px;height:24px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:800;}
+.nav-right{margin-left:auto;}
+.nav-link{font-size:12px;color:var(--ink3);text-decoration:none;font-weight:600;transition:color 0.15s;}
+.nav-link:hover{color:var(--ink);}
+
+.hero{background:var(--ink);padding:64px 28px 56px;position:relative;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;background-image:url('https://image2url.com/r2/default/images/1772231743096-f2038a56-953b-43f4-810d-614f016f8f95.png');background-size:cover;background-position:center;opacity:0.15;}
+.hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 50%, rgba(26,107,60,0.12) 0%, transparent 65%);}
+.hero-inner{max-width:680px;margin:0 auto;text-align:center;position:relative;z-index:1;}
+.hero-tag{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--green);margin-bottom:14px;display:inline-block;background:var(--green-bg);padding:4px 12px;border-radius:100px;}
+.hero-title{font-family:var(--serif);font-size:clamp(40px,7vw,80px);font-style:italic;color:white;line-height:1.0;margin-bottom:12px;}
+.hero-sub{font-size:14px;color:rgba(255,255,255,0.45);font-family:var(--mono);letter-spacing:0.5px;}
+
+.events-section{max-width:780px;margin:0 auto;padding:48px 28px 80px;}
+.events-label{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--ink3);margin-bottom:20px;}
+.events-grid{display:flex;flex-direction:column;gap:16px;}
+
+.event-card{background:var(--white);border:1px solid var(--border);border-radius:20px;overflow:hidden;text-decoration:none;color:var(--ink);display:flex;transition:all 0.2s;}
+.event-card.clickable:hover{border-color:var(--border2);box-shadow:0 8px 32px rgba(0,0,0,0.07);transform:translateY(-2px);}
+.event-card.sold-out{cursor:not-allowed;opacity:0.6;filter:grayscale(0.25);}
+
+.event-visual{width:220px;flex-shrink:0;position:relative;overflow:hidden;background:var(--bg2);}
+.event-visual img{width:100%;height:100%;object-fit:cover;display:block;}
+.event-visual-placeholder{width:100%;height:100%;min-height:180px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#e8f5ee,#d8d4cc);}
+
+.sold-overlay{position:absolute;inset:0;background:rgba(26,25,22,0.52);display:flex;align-items:center;justify-content:center;}
+.sold-label{background:var(--red);color:white;font-family:var(--mono);font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:6px 16px;border-radius:100px;transform:rotate(-8deg);}
+
+.event-body{flex:1;padding:24px 26px;display:flex;flex-direction:column;justify-content:space-between;}
+.event-tag{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;}
+.event-title{font-family:var(--serif);font-size:28px;font-style:italic;color:var(--ink);margin-bottom:6px;line-height:1.1;}
+.event-persian{font-size:13px;color:var(--ink3);margin-bottom:14px;direction:rtl;}
+.event-meta{display:flex;flex-direction:column;gap:5px;}
+.event-meta-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink2);}
+.event-meta-row svg{flex-shrink:0;opacity:0.45;}
+.event-meta-val{font-weight:600;color:var(--ink);}
+
+.event-footer{display:flex;align-items:center;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+.event-price-label{font-family:var(--mono);font-size:9px;color:var(--ink3);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.event-price{font-family:var(--serif);font-size:22px;font-style:italic;color:var(--amber);}
+.event-price.soldout{color:var(--red);font-size:13px;font-style:normal;font-family:var(--mono);font-weight:800;letter-spacing:1.5px;}
+
+.btn-event{background:var(--amber);color:white;border:none;padding:10px 22px;border-radius:100px;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
+.btn-event:hover{background:var(--amber-light);}
+.btn-event.disabled{background:var(--border);color:var(--ink3);cursor:not-allowed;}
+
+footer{border-top:1px solid var(--border);padding:24px 28px;text-align:center;}
+.footer-text{font-size:11px;color:var(--ink3);font-family:var(--mono);}
+.footer-text a{color:var(--ink3);text-decoration:none;}
+.footer-text a:hover{color:var(--ink);}
+
+@media(max-width:600px){
+  .event-card{flex-direction:column;}
+  .event-visual{width:100%;height:160px;}
+  .event-visual-placeholder{min-height:160px;}
+  .event-body{padding:18px;}
+  .hero{padding:48px 20px 40px;}
+  .events-section{padding:32px 16px 60px;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><div class="logo-mark">T</div>TCICS</div>
+  <div class="nav-right">
+    <a href="mailto:sponsor@tcics.com" class="nav-link">sponsor@tcics.com</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-inner">
+    <div class="hero-tag">Tri-City Iranian Cultural Society</div>
+    <div class="hero-title">Our Events</div>
+    <div class="hero-sub">METRO VANCOUVER · 2026</div>
+  </div>
+</div>
+
+<div class="events-section">
+  <div class="events-label">Upcoming & Past Events</div>
+  <div class="events-grid">
+
+    <!-- TIREGAN 2026 -->
+    <a href="tiregan.html" class="event-card clickable">
+      <div class="event-visual">
+        <img src="https://www.image2url.com/r2/default/images/1776915529516-124df5d1-121d-43e7-a0f7-2d8c7fa337af.png" alt="Tiregan 2026">
+      </div>
+      <div class="event-body">
+        <div>
+          <div class="event-tag">TCICS · Coquitlam, BC</div>
+          <div class="event-title">Tiregan 2026</div>
+          <div class="event-meta">
+            <div class="event-meta-row">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="event-meta-val">Saturday, July 11, 2026</span>
+            </div>
+            <div class="event-meta-row">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="event-meta-val">10:00 AM – 10:00 PM</span>
+            </div>
+            <div class="event-meta-row">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="event-meta-val">Lafarge Lake Park, Coquitlam</span>
+            </div>
+            <div class="event-meta-row">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span class="event-meta-val">30,000+ Expected Attendees</span>
+            </div>
+          </div>
+        </div>
+        <div class="event-footer">
+          <div>
+            <div class="event-price-label">Status</div>
+            <div style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--green);letter-spacing:0.5px;">Booking Open</div>
+          </div>
+          <span class="btn-event" style="background:var(--green);">Buy now →</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- CHAHARSHANBE SOORI — SOLD OUT -->
+    <div class="event-card sold-out">
+      <div class="event-visual">
+        <img src="https://image2url.com/r2/default/images/1772231852992-6c9476d9-5601-4769-8ff4-736fbacd6dae.png" alt="Chaharshanbe Soori">
+        <div class="sold-overlay"><div class="sold-label">Sold Out</div></div>
+      </div>
+      <div class="event-body">
+        <div>
+          <div class="event-tag">TCICS · Coquitlam, BC</div>
+          <div class="event-title">Chaharshanbe Soori 2026</div>
+          <div class="event-persian">مراسم چهارشنبه‌سوری — آتش، موسیقی، فرهنگ</div>
+          <div class="event-meta">
+            <div class="event-meta-row">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span class="event-meta-val">Tuesday, March 17, 2026</span>
+            </div>
+            <div class="event-meta-row">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span class="event-meta-val">Lafarge Lake Park, Coquitlam</span>
+            </div>
+            <div class="event-meta-row">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span class="event-meta-val">30,000+ Attendees</span>
+            </div>
+          </div>
+        </div>
+        <div class="event-footer">
+          <div>
+            <div class="event-price-label">Status</div>
+            <div class="event-price soldout">SOLD OUT</div>
+          </div>
+          <span class="btn-event disabled">No spots left</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <div class="footer-text">
+    © 2026 Tri-City Iranian Cultural Society ·
+    <a href="mailto:sponsor@tcics.com">sponsor@tcics.com</a> ·
+    +1 (604) 849-6580 ·
+    <a href="privacy.html">Privacy Policy</a>
+  </div>
+</footer>
+
+</body>
+</html>
