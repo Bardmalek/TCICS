@@ -8,7 +8,7 @@ A deployed event-commerce project built for the Tri-City Iranian Cultural Societ
 
 **Interactive floor plan · Server-verified payments · Organizer operations**
 
-[Event website](https://tcicsbooking.com) · [Architecture](#architecture) · [Explore the code](#explore-the-code) · [Local preview](#local-preview)
+[Interactive demo](https://bardmalek.github.io/TCICS/demo.html) · [Event website](https://tcicsbooking.com) · [Architecture](#architecture) · [Explore the code](#explore-the-code) · [Local preview](#local-preview)
 
 </div>
 
@@ -23,6 +23,8 @@ Tiregan brings those steps into one application: an interactive venue map for ve
 Built and operated by **Bardia Malackzadeh**, with AI-assisted development and iterative production support.
 
 > **Event archive:** The 2026 event has concluded. The live site's closed/sold inventory display includes administrative markers and must not be interpreted as a count of online purchases. Please do not submit test bookings or payments to the production site.
+
+The [interactive demo](https://bardmalek.github.io/TCICS/demo.html) shows nine sample available booths across the venue map, including the paired 31+32 package. It is a static walkthrough: booth selection and the booking form work, while payment and reservation creation are disabled. Sample availability does not reflect 2026 sales.
 
 ## Project Snapshot
 
