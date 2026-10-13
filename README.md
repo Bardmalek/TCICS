@@ -18,7 +18,7 @@ A deployed event-commerce project built for the Tri-City Iranian Cultural Societ
 
 Booking a festival booth involves more than collecting a payment. A vendor needs to choose a physical location, understand its price, reserve it while checking out, and receive confirmation. The organizer needs to see who booked, what happened to the payment, and what needs attention.
 
-Tiregan brings those steps into one application: an interactive venue map for vendors and a companion operations dashboard for the organizer. It was deployed for **Tiregan 2026 at Lafarge Lake Park, Coquitlam**, as a VenueMap event-specific implementation.
+Tiregan brings those steps into one application: an interactive venue map for vendors and a companion operations dashboard for the organizer. It was deployed for **Tiregan 2026 at Lafarge Lake Park, Coquitlam**.
 
 Built and operated by **Bardia Malackzadeh**, with AI-assisted development and iterative production support.
 
